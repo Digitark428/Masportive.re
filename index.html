@@ -144,37 +144,69 @@ label.fld{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);mar
   .brand,.tname{display:none}.side-foot{flex-direction:row;flex-wrap:wrap;margin-top:10px;border:none;padding-top:0}
   .side-foot button{width:auto}.wrap{padding:22px 16px 80px}.cols-2,.cols-3{grid-template-columns:1fr}
 }
+/* --- connexion --- */
+.auth-wrap{min-height:100vh;display:grid;place-items:center;padding:20px;background:
+  radial-gradient(1200px 600px at 50% -10%, #fff6ec 0, var(--sand) 60%)}
+.auth-card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:30px 26px}
+.auth-card .brand h1{font-size:18px}
+.login-err{color:var(--bad);font-size:12.5px;font-weight:600;margin-top:10px;min-height:16px;text-align:center}
+/* --- accueil --- */
+.home{min-height:100vh}
+.home-head{display:flex;justify-content:space-between;align-items:center;padding:18px 30px;background:var(--ink);color:#fff;position:sticky;top:0;z-index:5}
+.home-head .brand h1{color:#fff}.home-head .brand small{color:#9c958a}
+.home-body{max-width:1000px;margin:0 auto;padding:28px 24px 80px}
+.create-card{border:1px solid var(--line)}
+.t-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.t-card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px}
+.t-card.editing{border-color:var(--coral)}
+.t-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:8px}
+.t-name{font-weight:760;font-size:16px;letter-spacing:-.2px}
+.status{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:99px;background:var(--sand-2);color:var(--ink-soft);white-space:nowrap;flex:none}
+.status.ok{background:#E2F0E6;color:var(--ok)}.status.muted2{background:#eee;color:#999}
+.t-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12.5px;color:var(--ink-soft);margin-bottom:14px}
+.t-actions{display:flex;flex-wrap:wrap;gap:7px}
+.danger-txt{color:var(--bad)}.danger-txt:hover{background:#fbeae8;border-color:var(--bad)}
+/* --- sidebar additions --- */
+.backbtn{width:100%;text-align:left;background:transparent;border:1px solid #3a3833;color:#cdc6b8;padding:7px 11px;border-radius:9px;font-size:12px;cursor:pointer;margin-bottom:12px}
+.backbtn:hover{background:#2a2925;color:#fff}
+.tname .tdate{display:block;color:#8a847a;font-size:11px;font-weight:500;margin-top:2px}
+.pool-h.gold{background:linear-gradient(90deg,var(--gold),#b8920f)}
+/* --- éditeur de terrains --- */
+.court-edit-list{display:flex;flex-direction:column;gap:8px}
+.court-edit{display:flex;align-items:center;gap:10px;background:var(--sand);border:1px solid var(--line);border-radius:10px;padding:7px 9px}
+.court-edit.central{border-color:var(--gold);background:#FBF6E6}
+.court-edit .cb{width:26px;height:26px;border-radius:7px;background:var(--sea);color:#fff;display:grid;place-items:center;font-weight:800;font-size:12px;flex:none}
+.court-edit .cb.central{background:var(--gold)}
+.court-edit input{flex:1}
+.court-row .cb.central{background:var(--gold)}
+.court-row .arrow{color:var(--ink-soft)}
+.court-row b{min-width:120px}
 </style>
 </head>
 <body>
-<div class="app">
-  <aside class="sidebar">
-    <div class="brand"><div class="ball"></div><div><h1>Cap Homard</h1><small>Gestion de tournoi</small></div></div>
-    <div class="tname" id="tnameSide">—</div>
-    <nav id="nav"></nav>
-    <div class="side-foot">
-      <button class="demo" onclick="generateDemo()">⚡ Tournoi de démonstration</button>
-      <button onclick="emptyTournament()">⌫ Tournoi vide</button>
-      <button onclick="exportJSON()">⤓ Exporter (.json)</button>
-      <button onclick="document.getElementById('importFile').click()">⤒ Importer</button>
-      <button class="danger" onclick="resetAll()">↺ Réinitialiser réglages</button>
-      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importJSON(event)">
-    </div>
-  </aside>
-  <main><div class="wrap" id="view"></div></main>
-</div>
+<div id="root"></div>
 <div class="toast" id="toast"></div>
+<input type="file" id="importFile" accept="application/json" style="display:none" onchange="importJSON(event)">
 <script>
 "use strict";
 /* ===================== ÉTAT ===================== */
 const DEFAULT=()=>({
-  config:{name:"Tournoi Cap Homard",nbPools:8,poolSizeTarget:5,qualifPerPool:3,points:21,courts:5,centralCourt:false,centralName:"Central"},
+  config:{name:"Tournoi Cap Homard",poolSizeTarget:5,qualifPerPool:3,points:21,courts:5,courtNames:["Terrain 1","Terrain 2","Terrain 3","Terrain 4","Terrain 5"],centralIndex:-1,demoTeams:40},
   teams:[], qualif:{pools:null}, haute:{pools:null}, basse:{pools:null}, finals:{haute:null,basse:null}
 });
-let S=load()||DEFAULT();
-let route="config", finalTab="haute";
-function load(){try{const r=localStorage.getItem("capHomard");return r?JSON.parse(r):null;}catch(e){return null;}}
-function save(){try{localStorage.setItem("capHomard",JSON.stringify(S));}catch(e){}}
+const CREDS={user:"volleypei",pass:"volleypei974"};
+let DB=loadDB()||migrate()||{tournaments:[]};
+let authed=localStorage.getItem("capAuth")==="1";
+let currentId=null, route="config", finalTab="haute", editId=null;
+let S=DEFAULT(); // référence vivante vers le tournoi ouvert
+function loadDB(){try{const r=localStorage.getItem("capHomardDB");return r?JSON.parse(r):null;}catch(e){return null;}}
+function migrate(){ // récupère un éventuel ancien tournoi unique
+  try{const r=localStorage.getItem("capHomard");if(r){const st=JSON.parse(r);return {tournaments:[{id:uid(),name:(st.config&&st.config.name)||"Tournoi",date:"",location:"",createdAt:Date.now(),updatedAt:Date.now(),state:st}]};}}catch(e){}
+  return null;
+}
+function cur(){return DB.tournaments.find(t=>t.id===currentId);}
+function persist(){try{if(currentId){const t=cur();if(t)t.updatedAt=Date.now();}localStorage.setItem("capHomardDB",JSON.stringify(DB));localStorage.setItem("capAuth",authed?"1":"0");}catch(e){}}
+const save=persist; // les fonctions du moteur appellent save()
 function uid(){return Math.random().toString(36).slice(2,9);}
 
 /* ===================== MOTEUR ===================== */
@@ -210,22 +242,46 @@ function poolStandings(pool){
   const complete=pool.scores.length>0&&pool.scores.every(s=>s[0]!==""&&s[1]!==""&&s[0]!=null&&s[1]!=null);
   return {teams:t,ordered,complete};
 }
-function makePools(seedIds,otherIds,nbPools){
-  const pools=Array.from({length:nbPools},()=>[]);
+/* --- Moteur de répartition optimale (priorités : format choisi > terrains/rotations > aucune équipe seule > éviter 6 > adapter 3/4/5) --- */
+function minSize(){return S.config.qualifPerPool+1;} // taille > nb de qualifiés
+function effTarget(){return Math.max(minSize(),Math.min(5,S.config.poolSizeTarget||5));}
+function evenPartition(T,k){const base=Math.floor(T/k),rem=T-base*k;return Array.from({length:k},(_,i)=>base+(i<rem?1:0));}
+// clé lexicographique (plus petit = meilleur) : [poules de 6+, -(poules à la taille cible), écart total, poules de 3, nb de poules]
+function sizeKey(sizes,t){let six=0,atT=0,dev=0,three=0;sizes.forEach(s=>{if(s>=6)six++;if(s===t)atT++;dev+=Math.abs(s-t);if(s===3)three++;});return [six,-atT,dev,three,sizes.length];}
+function keyLess(a,b){for(let i=0;i<a.length;i++){if(a[i]<b[i])return true;if(a[i]>b[i])return false;}return false;}
+function bestSizes(T){
+  if(T<=0)return[];
+  const m=minSize(),t=effTarget();
+  let best=null,bestKey=null;
+  for(let k=1;k<=T;k++){
+    const s=evenPartition(T,k);
+    if(Math.min(...s)<m)continue;       // jamais une poule ≤ nb de qualifiés
+    if(Math.max(...s)>6)continue;       // jamais 7+
+    const key=sizeKey(s,t);
+    if(!bestKey||keyLess(key,bestKey)){bestKey=key;best=s;}
+  }
+  if(best)return best;
+  // repli ultime (effectif minuscule incompatible) : le moins mauvais sans 7+
+  for(let k=1;k<=T;k++){const s=evenPartition(T,k);if(Math.max(...s)<=6)return s;}
+  return [T];
+}
+function feasibleClean(N){if(N===0)return true;const s=bestSizes(N);return Math.max(...s)<=5&&Math.min(...s)>=minSize();}
+function makePoolsSized(seedIds,otherIds,sizes){
+  const pools=sizes.map(()=>[]);
   const seeds=[...seedIds],others=[...otherIds];
-  for(let i=0;i<nbPools;i++){if(seeds.length)pools[i].push(seeds.shift());}
+  for(let i=0;i<sizes.length;i++){if(seeds.length)pools[i].push(seeds.shift());}
   const rest=[...seeds,...others];let fwd=true;
-  while(rest.length){const order=fwd?[...pools.keys()]:[...pools.keys()].reverse();
-    for(const p of order){if(rest.length)pools[p].push(rest.shift());else break;}fwd=!fwd;}
+  while(rest.length){const order=fwd?[...sizes.keys()]:[...sizes.keys()].reverse();let placed=false;
+    for(const p of order){if(pools[p].length<sizes[p]&&rest.length){pools[p].push(rest.shift());placed=true;}}
+    fwd=!fwd;if(!placed)break;}
   return pools.map(ids=>buildPool(ids));
 }
-function repool(recs,target){
-  const nb=Math.max(1,Math.round(recs.length/target));
-  const pools=Array.from({length:nb},()=>[]);
+function repoolSized(recs,sizes){
   const sorted=[...recs].sort((a,b)=>a.pos-b.pos||b.coeff-a.coeff);
-  let fwd=true,i=0;
-  while(i<sorted.length){const order=fwd?[...pools.keys()]:[...pools.keys()].reverse();
-    for(const p of order){if(i<sorted.length){pools[p].push(sorted[i].id);i++;}}fwd=!fwd;}
+  const pools=sizes.map(()=>[]);let fwd=true,idx=0;
+  while(idx<sorted.length){const order=fwd?[...sizes.keys()]:[...sizes.keys()].reverse();let placed=false;
+    for(const p of order){if(pools[p].length<sizes[p]&&idx<sorted.length){pools[p].push(sorted[idx].id);idx++;placed=true;}}
+    fwd=!fwd;if(!placed)break;}
   return pools.map(ids=>buildPool(ids));
 }
 function rankAllFromPools(pools){
@@ -263,29 +319,126 @@ const teamById=id=>S.teams.find(t=>t.id===id);
 const teamName=id=>{const t=teamById(id);return t?t.name:"—";};
 function plabel(i){let s="";i++;while(i>0){s=String.fromCharCode(65+(i-1)%26)+s;i=Math.floor((i-1)/26);}return s;}
 function poolCourt(idx){const c=Math.max(1,S.config.courts||1);return {court:(idx%c)+1,rotation:Math.floor(idx/c)+1};}
+function afternoonCourt(phase,idx){const H=S.haute.pools?S.haute.pools.length:0;return poolCourt(phase==="haute"?idx:H+idx);}
 function fmtCoeff(c){if(c===Infinity)return "Max";if(c===0)return "—";return c.toFixed(2);}
 function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
 function randScore(){const p=S.config.points;const l=5+Math.floor(Math.random()*(p-6));return Math.random()<.5?[p,Math.min(l,p-1)]:[Math.min(l,p-1),p];}
+/* --- terrains personnalisés --- */
+function ensureCourts(){const c=S.config;const n=Math.max(1,c.courts||1);if(!Array.isArray(c.courtNames))c.courtNames=[];
+  if(c.courtNames.length<n){for(let i=c.courtNames.length;i<n;i++)c.courtNames.push("Terrain "+(i+1));}
+  if(c.courtNames.length>n)c.courtNames=c.courtNames.slice(0,n);
+  if(c.centralIndex>=n)c.centralIndex=-1;}
+function courtName(idx0){ensureCourts();return S.config.courtNames[idx0]||("Terrain "+(idx0+1));}
+function isCentral(idx0){return S.config.centralIndex===idx0;}
 
-/* ===================== NAV ===================== */
+/* ===================== NAV / ÉCRANS ===================== */
 const PAGES=[
   {id:"config",n:"⚙",t:"Réglages"},{id:"teams",n:"♟",t:"Équipes"},{id:"draw",n:"⤮",t:"Tirage poules"},
   {id:"courts",n:"▣",t:"Terrains"},{id:"pools",n:"▦",t:"Poules qualif."},{id:"split",n:"⇅",t:"Qualif. H / B"},
   {id:"hb",n:"▥",t:"Poules H & B"},{id:"finals",n:"♛",t:"Phases finales"},{id:"final",n:"★",t:"Classement final"},
 ];
-function renderNav(){
-  document.getElementById("nav").innerHTML=PAGES.map(p=>`<a class="${route===p.id?'active':''}" onclick="go('${p.id}')"><span class="n">${p.n}</span>${p.t}</a>`).join("");
-  document.getElementById("tnameSide").textContent=S.config.name||"—";
-}
 function go(id){route=id;render();window.scrollTo(0,0);}
 function render(){
-  renderNav();
+  const root=document.getElementById("root");
+  if(!authed){root.innerHTML=loginScreen();persist();return;}
+  if(!currentId||!cur()){currentId=null;root.innerHTML=homeScreen();persist();return;}
+  S=cur().state;
+  root.innerHTML=`<div class="app"><aside class="sidebar">
+    <div class="brand"><div class="ball"></div><div><h1>Cap Homard</h1><small>Gestion de tournoi</small></div></div>
+    <button class="backbtn" onclick="backHome()">← Tous les tournois</button>
+    <div class="tname">${esc(cur().name||"—")}${cur().date?`<span class="tdate">${esc(cur().date)}</span>`:""}</div>
+    <nav>${PAGES.map(p=>`<a class="${route===p.id?'active':''}" onclick="go('${p.id}')"><span class="n">${p.n}</span>${p.t}</a>`).join("")}</nav>
+    <div class="side-foot">
+      <button class="demo" onclick="generateDemo()">⚡ Tournoi de démonstration</button>
+      <button onclick="emptyTournament()">⌫ Vider ce tournoi</button>
+      <button onclick="exportJSON()">⤓ Exporter (.json)</button>
+      <button onclick="document.getElementById('importFile').click()">⤒ Importer</button>
+      <button class="danger" onclick="logout()">⏻ Déconnexion</button>
+    </div></aside>
+    <main><div class="wrap" id="view"></div></main></div>`;
   document.getElementById("view").innerHTML=({config:pageConfig,teams:pageTeams,draw:pageDraw,courts:pageCourts,pools:pagePools,split:pageSplit,hb:pageHB,finals:pageFinals,final:pageFinal}[route])();
-  save();
+  persist();
 }
 function head(e,t,d){return `<div class="page-head"><div class="eyebrow">${e}</div><h2>${t}</h2>${d?`<p>${d}</p>`:""}</div>`;}
 function emptyState(i,t,m,b){return `<div class="card"><div class="empty"><div class="big">${i}</div><h4>${t}</h4><p class="muted">${m}</p>${b||""}</div></div>`;}
+
+/* ===================== CONNEXION ===================== */
+function loginScreen(){
+  return `<div class="auth-wrap"><div class="auth-card">
+    <div class="brand" style="justify-content:center;margin-bottom:18px"><div class="ball"></div><div><h1 style="color:var(--ink)">Cap Homard</h1><small style="color:var(--ink-soft)">Gestion de tournoi beach volley</small></div></div>
+    <label class="fld">Nom d'utilisateur</label><input type="text" id="loginUser" autocomplete="username" placeholder="volleypei" onkeydown="if(event.key==='Enter')login()">
+    <label class="fld" style="margin-top:12px">Mot de passe</label><input type="password" id="loginPass" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
+    <div id="loginErr" class="login-err"></div>
+    <button class="btn primary" style="width:100%;justify-content:center;margin-top:16px" onclick="login()">Se connecter</button>
+  </div></div>`;
+}
+function login(){
+  const u=(document.getElementById("loginUser").value||"").trim(),p=document.getElementById("loginPass").value||"";
+  if(u===CREDS.user&&p===CREDS.pass){authed=true;persist();render();}
+  else document.getElementById("loginErr").textContent="Identifiants incorrects. Accès refusé.";
+}
+function logout(){authed=false;currentId=null;persist();render();}
+
+/* ===================== ACCUEIL / MULTI-TOURNOIS ===================== */
+function tournamentStatus(st){
+  if(st.finals&&(st.finals.haute||st.finals.basse)){const br=st.finals.haute;if(br){const f=br.rounds[br.rounds.length-1][0];if(f&&f.sa!==""&&f.sb!=="")return {label:"Terminé",cls:"ok"};}return{label:"En finales",cls:""};}
+  if(st.haute&&st.haute.pools)return {label:"Après-midi",cls:""};
+  if(st.qualif&&st.qualif.pools)return {label:"Poules en cours",cls:""};
+  if(st.teams&&st.teams.length)return {label:"Inscriptions",cls:""};
+  return {label:"Nouveau",cls:"muted2"};
+}
+function homeScreen(){
+  const ts=[...DB.tournaments].sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  const cards=ts.map(t=>{
+    if(editId===t.id) return `<div class="t-card editing">
+      <label class="fld">Nom</label><input type="text" id="ed_name" value="${esc(t.name)}">
+      <div class="grid cols-2" style="margin-top:8px"><div><label class="fld">Date</label><input type="text" id="ed_date" value="${esc(t.date||"")}" placeholder="ex. 14 juin 2026"></div>
+      <div><label class="fld">Lieu (optionnel)</label><input type="text" id="ed_loc" value="${esc(t.location||"")}"></div></div>
+      <div class="row" style="margin-top:12px"><button class="btn primary sm" onclick="saveMeta('${t.id}')">Enregistrer</button><button class="btn sm" onclick="editId=null;render()">Annuler</button></div></div>`;
+    const st=tournamentStatus(t.state),nbT=t.state.teams?t.state.teams.length:0;
+    return `<div class="t-card">
+      <div class="t-top"><div class="t-name">${esc(t.name)}</div><span class="status ${st.cls}">${st.label}</span></div>
+      <div class="t-meta">${t.date?`<span>📅 ${esc(t.date)}</span>`:""}${t.location?`<span>📍 ${esc(t.location)}</span>`:""}<span>👥 ${nbT} équipes</span></div>
+      <div class="t-actions">
+        <button class="btn primary sm" onclick="openTournament('${t.id}')">Ouvrir</button>
+        <button class="btn sm" onclick="editId='${t.id}';render()">Modifier</button>
+        <button class="btn sm" onclick="duplicateTournament('${t.id}')">Dupliquer</button>
+        <button class="btn sm danger-txt" onclick="deleteTournament('${t.id}')">Supprimer</button>
+      </div></div>`;
+  }).join("");
+  return `<div class="home">
+    <header class="home-head">
+      <div class="brand"><div class="ball"></div><div><h1>Cap Homard</h1><small>Gestion de tournoi beach volley</small></div></div>
+      <button class="btn ghost sm" onclick="logout()">⏻ Déconnexion</button>
+    </header>
+    <div class="home-body">
+      <div class="card create-card">
+        <h3 class="sec" style="margin-bottom:12px">Créer un nouveau tournoi</h3>
+        <div class="grid cols-3">
+          <div><label class="fld">Nom du tournoi</label><input type="text" id="nt_name" placeholder="ex. Tournoi Cap Homard Juin 2026"></div>
+          <div><label class="fld">Date</label><input type="text" id="nt_date" placeholder="ex. 14 juin 2026"></div>
+          <div><label class="fld">Lieu (optionnel)</label><input type="text" id="nt_loc" placeholder="ex. Saint-Gilles"></div>
+        </div>
+        <button class="btn primary" style="margin-top:14px" onclick="createTournament()">+ Créer le tournoi</button>
+      </div>
+      <div class="spread" style="margin:26px 4px 14px"><h3 class="sec" style="margin:0">Mes tournois</h3><span class="muted tiny">${DB.tournaments.length} tournoi(s) enregistré(s)</span></div>
+      ${DB.tournaments.length? `<div class="t-grid">${cards}</div>` : `<div class="card"><div class="empty"><div class="big">🏖️</div><h4>Aucun tournoi pour l'instant</h4><p class="muted">Crée ton premier tournoi ci-dessus pour commencer.</p></div></div>`}
+    </div></div>`;
+}
+function createTournament(){
+  const name=(document.getElementById("nt_name").value||"").trim()||"Nouveau tournoi";
+  const date=(document.getElementById("nt_date").value||"").trim();
+  const loc=(document.getElementById("nt_loc").value||"").trim();
+  const st=DEFAULT();st.config.name=name;
+  const t={id:uid(),name,date,location:loc,createdAt:Date.now(),updatedAt:Date.now(),state:st};
+  DB.tournaments.push(t);openTournament(t.id);
+}
+function openTournament(id){currentId=id;S=cur().state;route="config";editId=null;render();}
+function backHome(){currentId=null;editId=null;persist();render();}
+function deleteTournament(id){const t=DB.tournaments.find(x=>x.id===id);if(!t)return;if(!confirm("Supprimer définitivement « "+t.name+" » ?"))return;DB.tournaments=DB.tournaments.filter(x=>x.id!==id);if(currentId===id)currentId=null;persist();render();}
+function duplicateTournament(id){const t=DB.tournaments.find(x=>x.id===id);if(!t)return;const copy=JSON.parse(JSON.stringify(t));copy.id=uid();copy.name=t.name+" (copie)";copy.state.config.name=copy.name;copy.createdAt=Date.now();copy.updatedAt=Date.now();DB.tournaments.push(copy);toast("Tournoi dupliqué");persist();render();}
+function saveMeta(id){const t=DB.tournaments.find(x=>x.id===id);if(!t)return;t.name=(document.getElementById("ed_name").value||"").trim()||t.name;t.date=(document.getElementById("ed_date").value||"").trim();t.location=(document.getElementById("ed_loc").value||"").trim();t.state.config.name=t.name;editId=null;persist();render();}
 
 /* ===================== RESET LOGIC ===================== */
 function resetFrom(stage){ // 'draw'|'split'|'finals'
@@ -297,70 +450,86 @@ function resetFrom(stage){ // 'draw'|'split'|'finals'
 
 /* ===================== 1. RÉGLAGES ===================== */
 function pageConfig(){
-  const c=S.config, expected=c.nbPools*c.poolSizeTarget;
-  return head("Étape 1","Réglages du tournoi","Configure ton tournoi. Tout s'adapte automatiquement au nombre de poules, de terrains et au mode de points.")+
+  const c=S.config;
+  const previewN=S.teams.length||c.demoTeams;
+  const sizes=bestSizes(previewN), nP=sizes.length;
+  const has6=sizes.some(s=>s>=6), has3=sizes.some(s=>s===3);
+  const tgtBad=c.poolSizeTarget<=c.qualifPerPool;
+  return head("Étape 1","Réglages du tournoi","Choisis la taille de poule de référence : l'app calcule automatiquement la meilleure répartition possible (poules de 4 ou 5 en priorité), en respectant ton format et le nombre de terrains.")+
   `<div class="card">
     <div class="grid cols-2">
-      <div><label class="fld">Nom du tournoi</label><input type="text" value="${esc(c.name)}" oninput="S.config.name=this.value;document.getElementById('tnameSide').textContent=this.value;save()"></div>
-      <div><label class="fld">Nombre de poules de qualification</label><input type="number" min="2" max="60" value="${c.nbPools}" onchange="setNb(this.value)"></div>
-      <div><label class="fld">Équipes par poule (cible)</label><input type="number" min="3" max="8" value="${c.poolSizeTarget}" onchange="S.config.poolSizeTarget=Math.max(3,Math.min(8,parseInt(this.value)||5));resetFrom('split');render()"></div>
-      <div><label class="fld">Qualifiés en Tableau Haut / poule</label><input type="number" min="1" max="6" value="${c.qualifPerPool}" onchange="S.config.qualifPerPool=Math.max(1,Math.min(6,parseInt(this.value)||3));resetFrom('split');render()"></div>
+      <div><label class="fld">Nom du tournoi</label><input type="text" value="${esc(c.name)}" oninput="S.config.name=this.value;if(cur())cur().name=this.value;save()"></div>
+      <div><label class="fld">Équipes par poule (référence)</label><input type="number" min="3" max="5" value="${c.poolSizeTarget}" onchange="S.config.poolSizeTarget=Math.max(3,Math.min(5,parseInt(this.value)||5));resetFrom('draw');render()"></div>
+      <div><label class="fld">Qualifiés en Tableau Haut / poule</label><input type="number" min="1" max="4" value="${c.qualifPerPool}" onchange="S.config.qualifPerPool=Math.max(1,Math.min(4,parseInt(this.value)||3));resetFrom('draw');render()"></div>
+      <div><label class="fld">Équipes pour le tournoi de démo</label><input type="number" min="6" max="200" value="${c.demoTeams}" onchange="S.config.demoTeams=Math.max(6,Math.min(200,parseInt(this.value)||40))"></div>
     </div>
     <div class="row" style="margin-top:18px">
       <div><label class="fld">Format des matchs</label>
         <div class="seg"><button class="${c.points===21?'on':''}" onclick="S.config.points=21;render()">21 points</button><button class="${c.points===25?'on':''}" onclick="S.config.points=25;render()">25 points</button></div></div>
     </div>
     <div class="row" style="margin-top:14px">
-      <span class="pill">${c.nbPools} poules</span>
-      <span class="pill">~${expected} équipes</span>
-      <span class="pill">${c.qualifPerPool} montent · ${c.poolSizeTarget-c.qualifPerPool>0?c.poolSizeTarget-c.qualifPerPool:0} en consolante</span>
+      <span class="pill">référence : poules de ${c.poolSizeTarget}</span>
+      <span class="pill">${c.qualifPerPool} montent · taille min. ${minSize()}</span>
+      <span class="pill ${has6?'warn':'ok'}">${previewN} éq. → ${nP} poules : ${sizes.join(' / ')}</span>
     </div>
-    <div class="note"><b>Règle Cap Homard :</b> dans chaque poule (round-robin, chaque équipe affronte toutes les autres), classement au <b>coefficient = points marqués ÷ points encaissés</b>. Les <b>${c.qualifPerPool} premiers</b> montent en <b>Tableau Haut</b>, les autres basculent en <b>Tableau Bas (consolante)</b>.</div>
+    ${tgtBad?`<div class="note" style="background:#FAE9DF;border-color:#E8C3B0;color:#8a3d22"><b>Attention :</b> une poule doit compter strictement plus d'équipes que de qualifiés. Avec ${c.qualifPerPool} qualifiés, la taille minimale est ${minSize()} — la référence sera relevée automatiquement.</div>`:""}
+    <div class="note"><b>Règle de répartition :</b> 1) respecter ta taille de référence ; 2) respecter les terrains (rotations) ; 3) n'oublier aucune équipe ; 4) éviter les poules de 6 ; 5) sinon adapter en 3/4/5. Les poules de 3 ne sont autorisées que si la taille minimale (${minSize()}) le permet. Classement au <b>coefficient = points pour ÷ points contre</b>, les <b>${c.qualifPerPool} premiers</b> montent en Tableau Haut.</div>
   </div>
-  <div class="card">
-    <div class="grid cols-2">
-      <div><label class="fld">Nombre de terrains disponibles</label><input type="number" min="1" max="30" value="${c.courts}" onchange="S.config.courts=Math.max(1,parseInt(this.value)||1);render()"></div>
-      <div><label class="fld">&nbsp;</label>
-        <label class="switch"><input type="checkbox" ${c.centralCourt?'checked':''} onchange="S.config.centralCourt=this.checked;render()"><span class="tg"></span>Terrain central pour demies & finales</label></div>
-    </div>
-    <p class="muted tiny" style="margin:12px 0 0"><b>1 terrain = 1 poule.</b> Si tu as plus de poules que de terrains, l'app crée automatiquement des rotations (voir l'onglet Terrains).</p>
-  </div>
-  <div class="card"><div class="spread"><div><h3 class="sec" style="margin:0">Pour démarrer</h3><p class="muted tiny" style="margin:4px 0 0">Saisis tes équipes, ou génère un tournoi de démo pour tout tester.</p></div>
+  ${courtsConfigCard()}
+  <div class="card"><div class="spread"><div><h3 class="sec" style="margin:0">Pour démarrer</h3><p class="muted tiny" style="margin:4px 0 0">Saisis tes équipes, ou génère un tournoi de démo (${c.demoTeams} équipes) pour tout tester.</p></div>
     <div class="row"><button class="btn sea" onclick="generateDemo()">⚡ Démo</button><button class="btn primary" onclick="go('teams')">Ajouter les équipes →</button></div></div></div>`;
 }
-function setNb(v){S.config.nbPools=Math.max(2,Math.min(60,parseInt(v)||2));resetFrom('draw');render();}
+function courtsConfigCard(){
+  const c=S.config;ensureCourts();
+  const previewN=S.teams.length||c.demoTeams, nP=bestSizes(previewN).length;
+  const rows=c.courtNames.map((nm,i)=>`<div class="court-edit ${isCentral(i)?'central':''}">
+     <span class="cb ${isCentral(i)?'central':''}">${i+1}</span>
+     <input type="text" value="${esc(nm)}" oninput="S.config.courtNames[${i}]=this.value;save()" placeholder="Terrain ${i+1}">
+     <button class="seed-btn ${isCentral(i)?'on':''}" onclick="S.config.centralIndex=${isCentral(i)?-1:i};render()" title="Définir comme terrain central">★ Central</button>
+   </div>`).join("");
+  const cen=c.centralIndex>=0?`<b>${esc(courtName(c.centralIndex))}</b> accueillera les finales et, en priorité, les demi-finales.`:`Aucun terrain central défini — les grands matchs seront répartis sur les terrains disponibles.`;
+  return `<div class="card">
+    <div class="grid cols-2"><div><label class="fld">Nombre de terrains disponibles</label><input type="number" min="1" max="30" value="${c.courts}" onchange="S.config.courts=Math.max(1,parseInt(this.value)||1);ensureCourts();render()"></div>
+      <div style="display:flex;align-items:flex-end"><p class="muted tiny" style="margin:0">${nP>c.courts?`${Math.ceil(nP/c.courts)} rotations le matin (${nP} poules / ${c.courts} terrains).`:`1 rotation suffit (${nP} poules ≤ ${c.courts} terrains).`}</p></div></div>
+    <h3 class="sec" style="margin:18px 0 10px">Personnalisation des terrains</h3>
+    <div class="court-edit-list">${rows}</div>
+    <div class="note" style="margin-top:14px">${cen}</div>
+    <p class="muted tiny" style="margin:10px 0 0"><b>1 terrain = 1 poule.</b> Ces noms sont utilisés partout : tirage, rotations, poules, demi-finales, finales et tableaux.</p>
+  </div>`;
+}
 
 /* ===================== 2. ÉQUIPES ===================== */
 function pageTeams(){
-  const c=S.config, seeds=S.teams.filter(t=>t.seed).length, expected=c.nbPools*c.poolSizeTarget, n=S.teams.length;
-  return head("Étape 2","Inscription des équipes","Ajoute tes équipes. Marque les têtes de série ⭐ : une par poule, réparties au tirage. Le nombre d'équipes est libre — l'app équilibre les poules.")+
+  const c=S.config, seeds=S.teams.filter(t=>t.seed).length, n=S.teams.length, m=minSize();
+  const sizes=n>=m?bestSizes(n):[], nP=sizes.length, ready=n>=m*2;
+  return head("Étape 2","Inscription des équipes","Ajoute tes équipes — le nombre est libre. L'app calcule le nombre de poules et leur taille selon ta référence. Marque les têtes de série ⭐ : une par poule.")+
   `<div class="card">
     <div class="team-input"><input type="text" id="newTeam" placeholder="Nom de l'équipe… (Entrée pour ajouter)" onkeydown="if(event.key==='Enter')addTeam()"><button class="btn primary" onclick="addTeam()">Ajouter</button></div>
     <div class="spread" style="margin-bottom:14px">
-      <div class="counter">${n} équipe${n>1?'s':''} ${n>=c.nbPools*2?'<span class="pill ok">ok pour '+c.nbPools+' poules</span>':'<span class="pill warn">min. '+(c.nbPools*2)+'</span>'} · cible ~${expected} · ${seeds} tête(s) de série</div>
-      <div class="row"><button class="btn sm" onclick="seedFirst()">Marquer les ${c.nbPools} premières en série</button><button class="btn sm" onclick="if(confirm('Vider la liste ?')){S.teams=[];resetFrom('draw');render()}">Tout effacer</button></div>
+      <div class="counter">${n} équipe${n>1?'s':''} ${n>=m?`<span class="pill ${sizes.some(s=>s>=6)?'warn':'ok'}">${nP} poules : ${sizes.join('/')}</span>`:`<span class="pill warn">min. ${m}</span>`} · ${seeds} tête(s) de série</div>
+      <div class="row"><button class="btn sm" onclick="seedFirst()">Marquer ${nP||'?'} têtes de série</button><button class="btn sm" onclick="if(confirm('Vider la liste ?')){S.teams=[];resetFrom('draw');render()}">Tout effacer</button></div>
     </div>
     ${n===0?'<p class="muted tiny">Aucune équipe. Astuce : le bouton ⚡ démo crée tout automatiquement.</p>':
       `<div class="team-list">${S.teams.map((t,i)=>`<div class="team-chip ${t.seed?'seed':''}"><span class="idx">${i+1}</span><span class="nm" title="${esc(t.name)}">${esc(t.name)}</span><button class="seed-btn ${t.seed?'on':''}" onclick="toggleSeed('${t.id}')" title="Tête de série">⭐</button><button class="x" onclick="removeTeam('${t.id}')">×</button></div>`).join("")}</div>`}
   </div>
-  ${n>=c.nbPools*2?`<div class="card"><div class="spread"><div><h3 class="sec" style="margin:0">Prêt pour le tirage</h3><p class="muted tiny" style="margin:4px 0 0">${n} équipes → ${c.nbPools} poules.</p></div><button class="btn primary" onclick="go('draw')">Tirage des poules →</button></div></div>`:""}`;
+  ${ready?`<div class="card"><div class="spread"><div><h3 class="sec" style="margin:0">Prêt pour le tirage</h3><p class="muted tiny" style="margin:4px 0 0">${n} équipes → ${nP} poules (${sizes.join('/')}).</p></div><button class="btn primary" onclick="go('draw')">Tirage des poules →</button></div></div>`:""}`;
 }
 function addTeam(){const el=document.getElementById("newTeam"),v=el.value.trim();if(!v)return;S.teams.push({id:uid(),name:v,seed:false});el.value="";resetFrom('draw');render();document.getElementById("newTeam").focus();}
 function removeTeam(id){S.teams=S.teams.filter(t=>t.id!==id);resetFrom('draw');render();}
 function toggleSeed(id){const t=teamById(id);t.seed=!t.seed;resetFrom('draw');render();}
-function seedFirst(){S.teams.forEach((t,i)=>t.seed=i<S.config.nbPools);resetFrom('draw');render();}
+function seedFirst(){const k=bestSizes(S.teams.length).length;S.teams.forEach((t,i)=>t.seed=i<k);resetFrom('draw');render();}
 
 /* ===================== 3. TIRAGE ===================== */
 function drawPools(){
   const seeds=S.teams.filter(t=>t.seed).map(t=>t.id);
   const others=shuffle(S.teams.filter(t=>!t.seed).map(t=>t.id));
-  S.qualif.pools=makePools(seeds,others,S.config.nbPools);
+  S.qualif.pools=makePoolsSized(seeds,others,bestSizes(S.teams.length));
   resetFrom('split');
 }
 function pageDraw(){
-  const need=S.config.nbPools*2;
-  if(S.teams.length<need)return head("Étape 3","Tirage des poules","")+emptyState("⤮","Pas assez d'équipes",`Il faut au moins ${need} équipes pour ${S.config.nbPools} poules. Tu en as ${S.teams.length}.`,`<button class="btn primary" style="margin-top:14px" onclick="go('teams')">Gérer les équipes</button>`);
-  if(!S.qualif.pools)return head("Étape 3","Tirage des poules","Têtes de série en tête de chaque poule, puis tirage serpentin équilibré.")+emptyState("⤮","Lance le tirage",`${S.teams.length} équipes à répartir en ${S.config.nbPools} poules.`,`<button class="btn primary" style="margin-top:14px" onclick="drawPools();render()">⤮ Tirer les poules</button>`);
+  const need=minSize()*2;
+  if(S.teams.length<need)return head("Étape 3","Tirage des poules","")+emptyState("⤮","Pas assez d'équipes",`Il faut au moins ${need} équipes (pour former au moins 2 poules). Tu en as ${S.teams.length}.`,`<button class="btn primary" style="margin-top:14px" onclick="go('teams')">Gérer les équipes</button>`);
+  if(!S.qualif.pools)return head("Étape 3","Tirage des poules","Têtes de série en tête de chaque poule, puis tirage serpentin équilibré.")+emptyState("⤮","Lance le tirage",`${S.teams.length} équipes → ${bestSizes(S.teams.length).length} poules (${bestSizes(S.teams.length).join('/')}).`,`<button class="btn primary" style="margin-top:14px" onclick="drawPools();render()">⤮ Tirer les poules</button>`);
   return head("Étape 3","Tirage des poules","Relance le tirage ou échange une équipe via son menu. Le terrain de chaque poule est indiqué.")+
   `<div class="spread" style="margin-bottom:16px"><span class="muted tiny">${S.qualif.pools.length} poules · têtes de série ⭐</span><button class="btn" onclick="if(confirm('Relancer ? Les scores seront effacés.'))drawPools()||render()">↻ Relancer le tirage</button></div>
    <div class="pool-grid">${S.qualif.pools.map((p,idx)=>poolCardDraw(idx)).join("")}</div>
@@ -368,7 +537,7 @@ function pageDraw(){
 }
 function poolCardDraw(idx){
   const p=S.qualif.pools[idx],L=plabel(idx),{court,rotation}=poolCourt(idx);
-  return `<div class="pool"><div class="pool-h"><div class="t"><span class="badge">${L}</span>Poule ${L}</div><span class="court-tag">Terrain ${court}${rotation>1?' · rot.'+rotation:''}</span></div>
+  return `<div class="pool"><div class="pool-h ${isCentral(court-1)?'gold':''}"><div class="t"><span class="badge">${L}</span>Poule ${L}</div><span class="court-tag" title="${esc(courtName(court-1))}">${esc(courtName(court-1))}${rotation>1?' · rot.'+rotation:''}</span></div>
    <div class="pool-body">${p.teams.map((id,pos)=>{const t=teamById(id);return `<div class="team-chip ${t&&t.seed?'seed':''}" style="margin:6px 0"><span class="idx">${pos+1}</span><span class="nm">${esc(teamName(id))}</span>
      <select class="seed-btn" style="width:auto;padding:3px" onchange="swapTeam(${idx},${pos},this.value)"><option value="">↔</option>${allSlots().filter(s=>!(s.pi===idx&&s.pos===pos)).map(s=>`<option value="${s.pi}|${s.pos}">→ ${plabel(s.pi)}${s.pos+1}: ${esc(teamName(s.id)).slice(0,14)}</option>`).join("")}</select></div>`}).join("")}</div></div>`;
 }
@@ -384,11 +553,21 @@ function pageCourts(){
     S.qualif.pools.forEach((p,idx)=>{const{court,rotation}=poolCourt(idx);(byRot[rotation]=byRot[rotation]||[]).push({idx,court});});
     qual=Object.keys(byRot).map(Number).sort((a,b)=>a-b).map(rot=>`
       <div class="rotation"><div class="rh"><span>Rotation ${rot}</span><span class="muted">${byRot[rot].length} poule(s)</span></div>
-        ${byRot[rot].sort((a,b)=>a.court-b.court).map(o=>`<div class="court-row"><span class="cb">T${o.court}</span><b>Poule ${plabel(o.idx)}</b><span class="muted tiny">${S.qualif.pools[o.idx].teams.length} équipes · ${S.qualif.pools[o.idx].matches.length} matchs</span></div>`).join("")}</div>`).join("");
+        ${byRot[rot].sort((a,b)=>a.court-b.court).map(o=>`<div class="court-row"><span class="cb ${isCentral(o.court-1)?'central':''}">${o.court}</span><b>${esc(courtName(o.court-1))}</b><span class="arrow">→</span><span>Poule ${plabel(o.idx)}</span><span class="muted tiny">${S.qualif.pools[o.idx].teams.length} éq. · ${S.qualif.pools[o.idx].matches.length} matchs</span></div>`).join("")}</div>`).join("");
   } else qual=`<p class="muted tiny">Fais le tirage des poules pour voir l'affectation des terrains.</p>`;
-  const finalsNote=c.centralCourt?`Les demi-finales, finales et petites finales sont programmées sur le <b>terrain ${esc(c.centralName)}</b>.`:`Active le terrain central dans les réglages pour réserver un terrain aux grands matchs.`;
-  return head("Logistique","Affectation des terrains",`1 terrain = 1 poule. Avec ${c.courts} terrain(s) et ${S.qualif.pools?S.qualif.pools.length:c.nbPools} poules, voici le planning des rotations.`)+
-   `<div class="card"><h3 class="sec">Poules de qualification</h3>${qual}</div>
+  let aft="";
+  if(S.haute.pools){
+    const combined=[...S.haute.pools.map((p,i)=>({p,lbl:"H"+(i+1),idx:i})),...S.basse.pools.map((p,i)=>({p,lbl:"C"+(i+1),idx:S.haute.pools.length+i}))];
+    const byRot={};
+    combined.forEach(o=>{const{court,rotation}=poolCourt(o.idx);(byRot[rotation]=byRot[rotation]||[]).push({...o,court});});
+    aft=Object.keys(byRot).map(Number).sort((a,b)=>a-b).map(rot=>`
+      <div class="rotation"><div class="rh"><span>Rotation ${rot}</span><span class="muted">${byRot[rot].length} poule(s)</span></div>
+        ${byRot[rot].sort((a,b)=>a.court-b.court).map(o=>`<div class="court-row"><span class="cb ${isCentral(o.court-1)?'central':''}">${o.court}</span><b>${esc(courtName(o.court-1))}</b><span class="arrow">→</span><span>Poule ${o.lbl}</span><span class="muted tiny">${o.p.teams.length} éq. · ${o.lbl[0]==='C'?'consolante':'tableau haut'}</span></div>`).join("")}</div>`).join("");
+  } else aft=`<p class="muted tiny">L'après-midi s'affiche une fois les poules Hautes/Basses générées.</p>`;
+  const finalsNote=c.centralIndex>=0?`Les finales et, en priorité, les demi-finales sont programmées sur le terrain central <b>${esc(courtName(c.centralIndex))}</b>.`:`Aucun terrain central défini (Réglages) : les grands matchs sont répartis sur l'ensemble des terrains.`;
+  return head("Logistique","Affectation des terrains",`1 terrain = 1 poule. ${c.courts} terrain(s) fixés pour toute la journée — l'app ne lance jamais plus de ${c.courts} poules en même temps et crée des rotations si besoin.`)+
+   `<div class="card"><h3 class="sec">Matin — poules de qualification</h3>${qual}</div>
+    <div class="card"><h3 class="sec">Après-midi — Tableau Haut & Consolante</h3>${aft}</div>
     <div class="card"><h3 class="sec">Phases finales</h3><p class="muted tiny" style="margin-top:-4px">${finalsNote} Les autres matchs sont répartis automatiquement sur les terrains 1 à ${c.courts}.</p></div>`;
 }
 
@@ -396,7 +575,7 @@ function pageCourts(){
 function poolCard(phase,idx,L,sea){
   const store=phaseStore(phase),pool=store.pools[idx],st=poolStandings(pool);
   const qpp=S.config.qualifPerPool;
-  const courtInfo=phase==="qualif"?poolCourt(idx):null;
+  const courtInfo=phase==="qualif"?poolCourt(idx):afternoonCourt(phase,idx);
   const rows=pool.matches.map((m,mi)=>{
     const id1=pool.teams[m.i],id2=pool.teams[m.j],ref=m.ref>=0?pool.teams[m.ref]:null;
     const s=pool.scores[mi]||["",""];
@@ -413,7 +592,7 @@ function poolCard(phase,idx,L,sea){
     const up = phase==="qualif" && x.rank>0 && x.rank<=qpp;
     return `<tr class="${x.rank===1?'r1':''} ${up&&x.rank!==1?'q':''} ${up?'qd':''}"><td><span class="rk">${x.rank||'-'}</span></td><td class="nm">${esc(teamName(x.id))}</td><td>${x.w}</td><td>${x.pf}</td><td>${x.pc}</td><td style="font-weight:700">${fmtCoeff(x.coeff)}</td></tr>`;
   }).join("")}</tbody></table>`;
-  return `<div class="pool"><div class="pool-h ${sea?'sea':''}"><div class="t"><span class="badge">${L}</span>Poule ${L}</div>${courtInfo?`<span class="court-tag">T${courtInfo.court}${courtInfo.rotation>1?'·r'+courtInfo.rotation:''}</span>`:(st.complete?'<span class="court-tag">fini</span>':'')}</div>
+  return `<div class="pool"><div class="pool-h ${sea?'sea':''}"><div class="t"><span class="badge">${L}</span>Poule ${L}</div>${courtInfo?`<span class="court-tag" title="${esc(courtName(courtInfo.court-1))}">${esc(courtName(courtInfo.court-1))}${courtInfo.rotation>1?'·r'+courtInfo.rotation:''}</span>`:(st.complete?'<span class="court-tag">fini</span>':'')}</div>
    <div class="pool-body">${rows}<div style="height:4px"></div>${tbl}</div></div>`;
 }
 function phaseStore(phase){return phase==="qualif"?S.qualif:phase==="haute"?S.haute:S.basse;}
@@ -437,10 +616,18 @@ function pagePools(){
 /* ===================== 6. QUALIFICATION H/B ===================== */
 function qualifComplete(){return S.qualif.pools&&S.qualif.pools.every(p=>poolStandings(p).complete);}
 function buildHB(){
-  const qpp=S.config.qualifPerPool,haute=[],basse=[];
-  S.qualif.pools.forEach(p=>poolStandings(p).ordered.forEach((e,idx)=>{const r={id:e.id,coeff:e.coeff===Infinity?9999:e.coeff,pos:idx+1};(idx<qpp?haute:basse).push(r);}));
-  S.haute.pools=repool(haute,S.config.poolSizeTarget);
-  S.basse.pools=repool(basse,S.config.poolSizeTarget);
+  const qpp=S.config.qualifPerPool;let haut=[],cons=[];
+  S.qualif.pools.forEach(p=>poolStandings(p).ordered.forEach((e,idx)=>{
+    const r={id:e.id,coeff:e.coeff===Infinity?9999:e.coeff,pos:idx+1};(idx<qpp?haut:cons).push(r);}));
+  cons.sort((a,b)=>a.pos-b.pos||b.coeff-a.coeff); // ordre de repêchage : meilleurs non-qualifiés d'abord
+  // repêchage minimal (Bas→Haut uniquement) pour que les deux tableaux tiennent en poules de 4/5
+  let promo=0;
+  for(let p=0;p<=cons.length;p++){const nb=haut.length+p,nc=cons.length-p;
+    if(feasibleClean(nb)&&(nc===0||feasibleClean(nc))){promo=p;break;}}
+  const repsUp=cons.slice(0,promo), hautAll=haut.concat(repsUp), consRest=cons.slice(promo);
+  S.haute.pools=repoolSized(hautAll,bestSizes(hautAll.length));
+  S.basse.pools=consRest.length?repoolSized(consRest,bestSizes(consRest.length)):[];
+  S._repeche={count:promo,ids:repsUp.map(r=>r.id)};
   S.finals={haute:null,basse:null};
 }
 function pageSplit(){
@@ -454,9 +641,12 @@ function pageSplit(){
   } else {
     const list=(store,pfx,sea)=>store.pools.map((p,i)=>`<div class="pool"><div class="pool-h ${sea?'sea':''}"><div class="t"><span class="badge">${pfx}${i+1}</span>Poule ${pfx}${i+1}</div><span class="court-tag">${p.teams.length} éq.</span></div><div class="pool-body">${p.teams.map((id,pos)=>`<div class="team-chip" style="margin:6px 0"><span class="idx">${pos+1}</span><span class="nm">${esc(teamName(id))}</span></div>`).join("")}</div></div>`).join("");
     const hc=S.haute.pools.reduce((a,p)=>a+p.teams.length,0),bc=S.basse.pools.reduce((a,p)=>a+p.teams.length,0);
-    body=`<div class="spread" style="margin-bottom:10px"><span class="muted tiny">Les ${S.config.qualifPerPool} premiers de chaque poule de qualif → <b>Tableau Haut</b> (${hc} éq.), le reste → <b>Tableau Bas / consolante</b> (${bc} éq.). Répartition équilibrée en serpentin.</span><button class="btn sm" onclick="if(confirm('Régénérer ? Les scores H/B seront effacés.'))buildHB()||render()">↻ Régénérer</button></div>
-      <h3 class="sec" style="color:var(--coral)">▲ Tableau Haut — ${S.haute.pools.length} poules</h3><div class="pool-grid">${list(S.haute,"H",false)}</div>
-      <h3 class="sec" style="color:var(--sea);margin-top:26px">▼ Tableau Bas (consolante) — ${S.basse.pools.length} poules</h3><div class="pool-grid">${list(S.basse,"C",true)}</div>
+    const hsizes=S.haute.pools.map(p=>p.teams.length).join("/"), bsizes=S.basse.pools.map(p=>p.teams.length).join("/")||"—";
+    const rep=S._repeche&&S._repeche.count>0?`<div class="note" style="margin:0 0 16px"><b>Repêchage :</b> ${S._repeche.count} équipe(s) du Tableau Bas remontée(s) vers le Haut pour éviter une poule de 6 et garder des poules de 4/5 : ${S._repeche.ids.map(id=>esc(teamName(id))).join(", ")}. Aucune équipe qualifiée le matin n'a été redescendue.</div>`:"";
+    body=`<div class="spread" style="margin-bottom:10px"><span class="muted tiny">Les ${S.config.qualifPerPool} premiers de chaque poule de qualif → <b>Tableau Haut</b> (${hc} éq.), le reste → <b>Tableau Bas / consolante</b> (${bc} éq.). Poules de 4 ou 5 uniquement.</span><button class="btn sm" onclick="if(confirm('Régénérer ? Les scores H/B seront effacés.'))buildHB()||render()">↻ Régénérer</button></div>
+      ${rep}
+      <h3 class="sec" style="color:var(--coral)">▲ Tableau Haut — ${S.haute.pools.length} poules (${hsizes})</h3><div class="pool-grid">${list(S.haute,"H",false)}</div>
+      <h3 class="sec" style="color:var(--sea);margin-top:26px">▼ Tableau Bas (consolante) — ${S.basse.pools.length} poules (${bsizes})</h3><div class="pool-grid">${list(S.basse,"C",true)}</div>
       <div class="card" style="margin-top:18px"><div class="spread"><span class="muted tiny">Place aux poules de l'après-midi.</span><button class="btn primary" onclick="go('hb')">Saisir les poules H & B →</button></div></div>`;
   }
   return head("Étape 5","Qualification Haute / Basse","Répartition des qualifiés en deux tableaux après les poules du matin.")+body;
@@ -498,8 +688,10 @@ function pageFinals(){
     `<div class="bracket-tabs">${tab("haute","▲ Tableau principal","var(--coral)")}${tab("basse","▼ Consolante","var(--sea)")}</div>${body}`;
 }
 function courtBadge(matchSeq,isBig){
-  if(isBig&&S.config.centralCourt)return `<span class="ct central">${esc(S.config.centralName)}</span>`;
-  return `<span class="ct">T${(matchSeq%Math.max(1,S.config.courts))+1}</span>`;
+  const c=S.config;
+  if(isBig&&c.centralIndex>=0)return `<span class="ct central" title="${esc(courtName(c.centralIndex))}">${esc(courtName(c.centralIndex))}</span>`;
+  const i=matchSeq%Math.max(1,c.courts);
+  return `<span class="ct" title="${esc(courtName(i))}">${esc(courtName(i))}</span>`;
 }
 function renderBracket(side){
   const br=S.finals[side];advance(br);
@@ -553,8 +745,9 @@ function pageFinal(){
 /* ===================== DÉMO / RESET ===================== */
 function generateDemo(){
   if(S.teams.length&&!confirm("Remplacer le tournoi actuel par un tournoi de démonstration ?"))return;
-  const n=S.config.nbPools,size=S.config.poolSizeTarget,total=n*size;
-  S.teams=[];for(let i=1;i<=total;i++)S.teams.push({id:uid(),name:"Équipe "+i,seed:i<=n});
+  const total=Math.max(minSize()*2,S.config.demoTeams||40);
+  const sizes=bestSizes(total), nSeeds=sizes.length;
+  S.teams=[];for(let i=1;i<=total;i++)S.teams.push({id:uid(),name:"Équipe "+i,seed:i<=nSeeds});
   drawPools();
   S.qualif.pools.forEach(p=>p.scores=p.matches.map(()=>randScore()));
   buildHB();
@@ -564,14 +757,22 @@ function generateDemo(){
   toast("Tournoi de démonstration généré");go("final");
 }
 function emptyTournament(){
-  if(!confirm("Repartir d'un tournoi vide ? (les réglages sont conservés)"))return;
+  if(!confirm("Repartir d'un tournoi vide ? (équipes et scores effacés, réglages conservés)"))return;
   S.teams=[];S.qualif.pools=null;S.haute.pools=null;S.basse.pools=null;S.finals={haute:null,basse:null};
   route="teams";toast("Tournoi vidé");render();
 }
-function resetAll(){if(confirm("Réinitialiser tout, réglages compris ?")){S=DEFAULT();route="config";toast("Réinitialisé");render();}}
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");clearTimeout(t._);t._=setTimeout(()=>t.classList.remove("show"),1900);}
-function exportJSON(){const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(S.config.name||"tournoi").replace(/[^\w\-]+/g,"_")+".json";a.click();toast("Tournoi exporté");}
-function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{S=JSON.parse(r.result);save();render();toast("Tournoi importé");}catch(err){alert("Fichier invalide.");}};r.readAsText(f);e.target.value="";}
+function exportJSON(){const t=cur();if(!t)return;const out={cap_tournoi:1,name:t.name,date:t.date,location:t.location,state:t.state};
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=(t.name||"tournoi").replace(/[^\w\-]+/g,"_")+".json";a.click();toast("Tournoi exporté");}
+function importJSON(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const data=JSON.parse(r.result);let t;
+    if(data&&data.cap_tournoi&&data.state){t={id:uid(),name:data.name||"Tournoi importé",date:data.date||"",location:data.location||"",createdAt:Date.now(),updatedAt:Date.now(),state:data.state};}
+    else if(data&&data.config&&data.teams){t={id:uid(),name:(data.config.name||"Tournoi importé"),date:"",location:"",createdAt:Date.now(),updatedAt:Date.now(),state:data};} // ancien format (état seul)
+    else if(data&&Array.isArray(data.tournaments)){data.tournaments.forEach(x=>{x.id=uid();DB.tournaments.push(x);});persist();render();toast("Tournois importés");return;}
+    else throw new Error("format");
+    DB.tournaments.push(t);currentId=null;persist();render();toast("Tournoi importé");
+  }catch(err){alert("Fichier invalide.");}};
+  r.readAsText(f);e.target.value="";}
 
 render();
 </script>
