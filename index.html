@@ -181,6 +181,12 @@ label.fld{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);mar
 .court-row .cb.central{background:var(--gold)}
 .court-row .arrow{color:var(--ink-soft)}
 .court-row b{min-width:120px}
+/* --- journal des décisions --- */
+.journal{background:#F2F6F6;border:1px solid #CFE0E0;border-left:3px solid var(--sea);border-radius:11px;padding:13px 16px;margin-bottom:18px}
+.journal .jh{font-size:11px;text-transform:uppercase;letter-spacing:.9px;font-weight:800;color:var(--sea-d);margin-bottom:8px}
+.journal ul{margin:0;padding-left:18px}
+.journal li{font-size:13px;color:#2f4a4a;margin:4px 0;line-height:1.5}
+.journal li b{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -284,6 +290,53 @@ function repoolSized(recs,sizes){
     fwd=!fwd;if(!placed)break;}
   return pools.map(ids=>buildPool(ids));
 }
+/* --- Assignation après-midi : priorité 1) éviter les re-matchs 2) disperser les classements 3) tailles 4) équilibre niveau --- */
+function morningCoPool(){ // id -> Set des coéquipiers de poule du matin
+  const m=new Map();
+  if(S.qualif.pools)S.qualif.pools.forEach(p=>{const ids=p.teams;ids.forEach(a=>{const set=m.get(a)||new Set();ids.forEach(b=>{if(b!==a)set.add(b);});m.set(a,set);});});
+  return m;
+}
+function groupTiers(recs){const m={};recs.forEach(r=>{(m[r.pos]=m[r.pos]||[]).push(r);});return Object.keys(m).map(Number).sort((a,b)=>a-b).map(pos=>m[pos].slice().sort((a,b)=>b.coeff-a.coeff));}
+function reCount(arr,rec,co){const s=co.get(rec.id);if(!s)return 0;let c=0;for(const x of arr)if(s.has(x.id))c++;return c;}
+function totalRe(pools,co){let c=0;pools.forEach(P=>{for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const s=co.get(P[i].id);if(s&&s.has(P[j].id))c++;}});return c;}
+function tierPen(pools){let p=0;pools.forEach(P=>{const b={};P.forEach(r=>b[r.pos]=(b[r.pos]||0)+1);Object.values(b).forEach(n=>{if(n>1)p+=n-1;});});return p;}
+function levelPen(pools){const a=pools.map(P=>P.length?P.reduce((s,r)=>s+Math.min(r.coeff,9),0)/P.length:0);const mn=a.reduce((s,v)=>s+v,0)/(a.length||1);return a.reduce((s,v)=>s+(v-mn)*(v-mn),0);}
+function scoreAssign(pools,co){return [totalRe(pools,co),tierPen(pools),levelPen(pools)];}
+function lessK(a,b){for(let i=0;i<a.length;i++){if(a[i]<b[i])return true;if(a[i]>b[i])return false;}return false;}
+function buildAfternoonPools(recs,sizes,co){
+  if(recs.length===0)return {poolIds:[],reMatch:0};
+  let best=null;
+  for(let att=0;att<60;att++){
+    const tiers=groupTiers(recs);let order=[];
+    tiers.forEach(t=>{order=order.concat(att===0?t:shuffle(t));});
+    const pools=sizes.map(()=>[]);
+    for(const rec of order){
+      let bp=-1,bk=null;
+      for(let p=0;p<pools.length;p++){
+        if(pools[p].length>=sizes[p])continue;
+        const key=[reCount(pools[p],rec,co),pools[p].filter(x=>x.pos===rec.pos).length,pools[p].length,pools[p].reduce((a,x)=>a+Math.min(x.coeff,9),0),Math.random()];
+        if(bk===null||lessK(key,bk)){bk=key;bp=p;}
+      }
+      if(bp<0)bp=pools.findIndex((P,p)=>P.length<sizes[p]);
+      pools[bp].push(rec);
+    }
+    const sc=scoreAssign(pools,co);
+    if(!best||lessK(sc,best.sc))best={pools:pools.map(P=>P.slice()),sc};
+  }
+  // amélioration locale par échanges (réduit re-matchs puis déséquilibres)
+  let guard=0,improved=true;
+  while(improved&&guard++<25){
+    improved=false;const P=best.pools;
+    for(let a=0;a<P.length&&!improved;a++)for(let b=a+1;b<P.length&&!improved;b++)
+      for(let i=0;i<P[a].length&&!improved;i++)for(let j=0;j<P[b].length;j++){
+        const t=P[a][i];P[a][i]=P[b][j];P[b][j]=t;
+        const sc=scoreAssign(P,co);
+        if(lessK(sc,best.sc)){best.sc=sc;improved=true;break;}
+        const t2=P[a][i];P[a][i]=P[b][j];P[b][j]=t2;
+      }
+  }
+  return {poolIds:best.pools.map(P=>P.map(r=>r.id)),reMatch:best.sc[0]};
+}
 function rankAllFromPools(pools){
   const byPos={};
   pools.forEach(p=>poolStandings(p).ordered.forEach((e,idx)=>{(byPos[idx]=byPos[idx]||[]).push({id:e.id,coeff:e.coeff});}));
@@ -362,6 +415,47 @@ function render(){
 }
 function head(e,t,d){return `<div class="page-head"><div class="eyebrow">${e}</div><h2>${t}</h2>${d?`<p>${d}</p>`:""}</div>`;}
 function emptyState(i,t,m,b){return `<div class="card"><div class="empty"><div class="big">${i}</div><h4>${t}</h4><p class="muted">${m}</p>${b||""}</div></div>`;}
+/* --- Journal des décisions automatiques --- */
+function journalBox(title,lines){return `<div class="journal"><div class="jh">⚙ ${title}</div><ul>${lines.map(l=>`<li>${l}</li>`).join("")}</ul></div>`;}
+function journalQualif(){
+  if(!S.qualif.pools)return "";
+  const sizes=S.qualif.pools.map(p=>p.teams.length);
+  return journalBox("Décisions automatiques — Qualification",[
+    `<b>${S.teams.length}</b> équipes inscrites.`,
+    `<b>${S.qualif.pools.length}</b> poules de qualification générées — format <b>${sizes.join(' / ')}</b> (taille de référence : ${S.config.poolSizeTarget}).`,
+    `Têtes de série placées en tête de poule, puis tirage serpentin équilibré.`,
+    `Règle : les <b>${S.config.qualifPerPool} premiers</b> de chaque poule montent en Tableau Haut, les autres en Consolante.`
+  ]);
+}
+function journalHB(){
+  if(!S.haute.pools)return "";
+  const hc=S.haute.pools.reduce((x,p)=>x+p.teams.length,0),bc=S.basse.pools.reduce((x,p)=>x+p.teams.length,0);
+  const hs=S.haute.pools.map(p=>p.teams.length).join(' / '),bs=S.basse.pools.map(p=>p.teams.length).join(' / ')||"—";
+  const a=S._afternoon||{},hrm=a.haute?a.haute.reMatch:0,brm=a.basse?a.basse.reMatch:0;
+  const lines=[
+    `Les <b>${S.config.qualifPerPool} premiers</b> de chaque poule qualifiés en Tableau Haut, les autres envoyés en Consolante.`,
+    `<b>${hc}</b> équipes en Tableau Haut · <b>${bc}</b> équipes en Consolante.`
+  ];
+  if(S._repeche&&S._repeche.count>0)lines.push(`<b>${S._repeche.count}</b> meilleur(s) non-qualifié(s) repêché(s) vers le haut pour équilibrer les formats (éviter une poule de 6) : ${S._repeche.ids.map(id=>esc(teamName(id))).join(', ')}. Aucune équipe qualifiée n'a été redescendue.`);
+  else lines.push(`Aucun repêchage nécessaire.`);
+  lines.push(`Tableau Haut organisé en <b>${S.haute.pools.length}</b> poules (${hs}).`);
+  lines.push(`Consolante organisée en <b>${S.basse.pools.length}</b> poules (${bs}).`);
+  lines.push(`Répartition équitable : 1ers, 2es, 3es… dispersés dans des poules différentes pour équilibrer le niveau.`);
+  if(hrm+brm===0)lines.push(`<b>Aucun re-match</b> : aucune équipe ne rejoue contre une équipe déjà affrontée le matin.`);
+  else lines.push(`<b>${hrm+brm} re-match(s)</b> inévitable(s) : la priorité a été donnée à éviter les rencontres, mais aucune solution sans re-match n'existait avec ces effectifs.`);
+  return journalBox("Décisions automatiques — Tableau Haut & Consolante",lines);
+}
+function journalFinals(){
+  const h=S.finals.haute,b=S.finals.basse;if(!h&&!b)return "";
+  const fmt=br=>{if(!br||br.size<2)return "non disponible";advance(br);const r=br.rounds.length,ns=[];for(let i=0;i<r;i++)ns.push(roundName(r-i));return `<b>${br.size}</b> équipes (${ns.join(' → ')})`;};
+  const lines=[
+    `Tableau principal : ${fmt(h)}.`,
+    `Consolante : ${fmt(b)}.`,
+    `Qualifiés issus du classement des poules de l'après-midi ; taille = plus grande puissance de 2 possible (4, 8, 16, 32).`
+  ];
+  lines.push(S.config.centralIndex>=0?`Finales et demi-finales programmées sur le terrain central « ${esc(courtName(S.config.centralIndex))} ».`:`Aucun terrain central défini.`);
+  return journalBox("Décisions automatiques — Phases finales",lines);
+}
 
 /* ===================== CONNEXION ===================== */
 function loginScreen(){
@@ -609,6 +703,7 @@ function pagePools(){
   let done=S.qualif.pools.filter(p=>poolStandings(p).complete).length;
   const tot=S.qualif.pools.length;
   return head("Étape 4","Poules de qualification",`Round-robin : chaque équipe affronte toutes les autres de sa poule. Matchs en ${S.config.points} points. Classement automatique au coefficient. Les ${S.config.qualifPerPool} premiers (surlignés) montent en Tableau Haut.`)+
+   journalQualif()+
    `<div class="spread" style="margin-bottom:16px"><span class="pill ${done===tot?'ok':''}">${done}/${tot} poules terminées</span><button class="btn sm" onclick="go('split')">Qualification H/B →</button></div>
     <div class="pool-grid">${S.qualif.pools.map((p,idx)=>poolCard("qualif",idx,plabel(idx),false)).join("")}</div>`;
 }
@@ -625,9 +720,13 @@ function buildHB(){
   for(let p=0;p<=cons.length;p++){const nb=haut.length+p,nc=cons.length-p;
     if(feasibleClean(nb)&&(nc===0||feasibleClean(nc))){promo=p;break;}}
   const repsUp=cons.slice(0,promo), hautAll=haut.concat(repsUp), consRest=cons.slice(promo);
-  S.haute.pools=repoolSized(hautAll,bestSizes(hautAll.length));
-  S.basse.pools=consRest.length?repoolSized(consRest,bestSizes(consRest.length)):[];
+  const co=morningCoPool();
+  const hRes=buildAfternoonPools(hautAll,bestSizes(hautAll.length),co);
+  const bRes=buildAfternoonPools(consRest,bestSizes(consRest.length),co);
+  S.haute.pools=hRes.poolIds.map(ids=>buildPool(ids));
+  S.basse.pools=bRes.poolIds.map(ids=>buildPool(ids));
   S._repeche={count:promo,ids:repsUp.map(r=>r.id)};
+  S._afternoon={haute:{reMatch:hRes.reMatch},basse:{reMatch:bRes.reMatch}};
   S.finals={haute:null,basse:null};
 }
 function pageSplit(){
@@ -642,9 +741,7 @@ function pageSplit(){
     const list=(store,pfx,sea)=>store.pools.map((p,i)=>`<div class="pool"><div class="pool-h ${sea?'sea':''}"><div class="t"><span class="badge">${pfx}${i+1}</span>Poule ${pfx}${i+1}</div><span class="court-tag">${p.teams.length} éq.</span></div><div class="pool-body">${p.teams.map((id,pos)=>`<div class="team-chip" style="margin:6px 0"><span class="idx">${pos+1}</span><span class="nm">${esc(teamName(id))}</span></div>`).join("")}</div></div>`).join("");
     const hc=S.haute.pools.reduce((a,p)=>a+p.teams.length,0),bc=S.basse.pools.reduce((a,p)=>a+p.teams.length,0);
     const hsizes=S.haute.pools.map(p=>p.teams.length).join("/"), bsizes=S.basse.pools.map(p=>p.teams.length).join("/")||"—";
-    const rep=S._repeche&&S._repeche.count>0?`<div class="note" style="margin:0 0 16px"><b>Repêchage :</b> ${S._repeche.count} équipe(s) du Tableau Bas remontée(s) vers le Haut pour éviter une poule de 6 et garder des poules de 4/5 : ${S._repeche.ids.map(id=>esc(teamName(id))).join(", ")}. Aucune équipe qualifiée le matin n'a été redescendue.</div>`:"";
-    body=`<div class="spread" style="margin-bottom:10px"><span class="muted tiny">Les ${S.config.qualifPerPool} premiers de chaque poule de qualif → <b>Tableau Haut</b> (${hc} éq.), le reste → <b>Tableau Bas / consolante</b> (${bc} éq.). Poules de 4 ou 5 uniquement.</span><button class="btn sm" onclick="if(confirm('Régénérer ? Les scores H/B seront effacés.'))buildHB()||render()">↻ Régénérer</button></div>
-      ${rep}
+    body=`${journalHB()}<div class="spread" style="margin-bottom:10px"><span class="muted tiny">Les ${S.config.qualifPerPool} premiers de chaque poule de qualif → <b>Tableau Haut</b> (${hc} éq.), le reste → <b>Tableau Bas / consolante</b> (${bc} éq.). Poules de 4 ou 5 uniquement.</span><button class="btn sm" onclick="if(confirm('Régénérer ? Le placement et les scores H/B seront refaits.'))buildHB()||render()">↻ Régénérer</button></div>
       <h3 class="sec" style="color:var(--coral)">▲ Tableau Haut — ${S.haute.pools.length} poules (${hsizes})</h3><div class="pool-grid">${list(S.haute,"H",false)}</div>
       <h3 class="sec" style="color:var(--sea);margin-top:26px">▼ Tableau Bas (consolante) — ${S.basse.pools.length} poules (${bsizes})</h3><div class="pool-grid">${list(S.basse,"C",true)}</div>
       <div class="card" style="margin-top:18px"><div class="spread"><span class="muted tiny">Place aux poules de l'après-midi.</span><button class="btn primary" onclick="go('hb')">Saisir les poules H & B →</button></div></div>`;
@@ -656,6 +753,7 @@ function pageSplit(){
 function pageHB(){
   if(!S.haute.pools)return head("Étape 6","Poules Hautes & Basses","")+emptyState("▥","Pas encore qualifiées","Génère d'abord la répartition H/B.",`<button class="btn primary" style="margin-top:14px" onclick="go('split')">Qualification H/B</button>`);
   return head("Étape 6","Poules Hautes & Basses",`Deuxième phase de qualification. Mêmes règles. Les mieux classés se qualifient pour les tableaux finaux.`)+
+   journalHB()+
    `<h3 class="sec" style="color:var(--coral)">▲ Tableau Haut</h3><div class="pool-grid">${S.haute.pools.map((p,idx)=>poolCard("haute",idx,"H"+(idx+1),false)).join("")}</div>
     <h3 class="sec" style="color:var(--sea);margin-top:28px">▼ Tableau Bas (consolante)</h3><div class="pool-grid">${S.basse.pools.map((p,idx)=>poolCard("basse",idx,"C"+(idx+1),true)).join("")}</div>
     <div class="card" style="margin-top:18px"><div class="spread"><span class="muted tiny">Poules finies ? Place aux phases finales.</span><button class="btn primary" onclick="go('finals')">Phases finales →</button></div></div>`;
@@ -685,6 +783,7 @@ function pageFinals(){
   else if(!br||br.size<2)body=emptyState("♛","Pas assez de qualifiés","Il faut au moins 2 équipes qualifiées pour un tableau.","");
   else body=renderBracket(finalTab);
   return head("Étape 7","Phases finales",`Tableaux à élimination directe générés automatiquement selon le nombre de qualifiés (4, 8, 16, 32…). Saisis les scores : les vainqueurs avancent seuls.`)+
+    journalFinals()+
     `<div class="bracket-tabs">${tab("haute","▲ Tableau principal","var(--coral)")}${tab("basse","▼ Consolante","var(--sea)")}</div>${body}`;
 }
 function courtBadge(matchSeq,isBig){
