@@ -428,6 +428,7 @@ async function boot(){
     try{ cfg=await fetch("/api/config",{cache:"no-store"}).then(r=>r.json()); }
     catch(e){ throw new Error("Configuration introuvable (/api/config). Le projet doit être déployé sur Vercel avec le dossier api/."); }
     if(!cfg||!cfg.url||!cfg.anonKey) throw new Error("Variables Supabase manquantes dans Vercel (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).");
+    console.log("[cloud] config chargée, URL :",cfg.url,"| clé :",(cfg.anonKey||"").slice(0,12)+"…");
     await loadSupabaseLib();
     sb=supabase.createClient(cfg.url,cfg.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
     sb.auth.onAuthStateChange((_e,session)=>{ onSession(session); });
@@ -439,6 +440,7 @@ async function onSession(session){
   const u=session?session.user:null;
   const changed=(u?u.id:null)!==_lastUid;
   user=u; _lastUid=u?u.id:null;
+  if(user)console.log("[cloud] utilisateur connecté :",user.email,"(id:",user.id+")");
   if(user){ if(changed){ await cloudLoad(); } }
   else { DB={tournaments:[]}; currentId=null; _cloudSig={}; }
   render();
@@ -450,33 +452,49 @@ function tsig(t){return JSON.stringify({n:t.name,d:t.date,l:t.location,c:t.creat
 async function cloudLoad(){
   syncSet("sync");_cloudSig={};
   try{
-    const {data,error}=await sb.from("tournaments").select("id,updated_at,payload");
-    if(error)throw error;
+    const {data,error}=await sb.from("tournaments").select("id,updated_at,data");
+    if(error){console.error("[cloud] ERREUR chargement Supabase:",error,"| message:",error.message,"| details:",error.details,"| hint:",error.hint,"| code:",error.code);throw error;}
     const byId={};
-    (data||[]).forEach(row=>{ if(row.payload){byId[row.id]=row.payload; _cloudSig[row.id]=tsig(row.payload);} });
+    (data||[]).forEach(row=>{ const t=row.data; if(t&&row.id){ if(t.updatedAt==null&&row.updated_at!=null)t.updatedAt=row.updated_at; byId[row.id]=t; _cloudSig[row.id]=tsig(t);} });
+    console.log("[cloud] chargement OK :",(data||[]).length,"tournoi(s) pour cet utilisateur");
     const cache=loadLocalCache();
     if(cache&&cache.tournaments)cache.tournaments.forEach(t=>{ const r=byId[t.id]; if(!r||(t.updatedAt||0)>(r.updatedAt||0))byId[t.id]=t; });
     DB={tournaments:Object.values(byId).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))};
     cacheLocal(); syncSet("ok");
     await cloudFlush();
-  }catch(e){ const cache=loadLocalCache(); if(cache)DB=cache; syncSet("offline"); }
+  }catch(e){ console.error("[cloud] chargement échoué, repli local:",e&&e.message,e); const cache=loadLocalCache(); if(cache)DB=cache; syncSet("offline"); }
 }
 function scheduleCloudSync(){ if(!sb||!user)return; clearTimeout(_cloudTimer); _cloudTimer=setTimeout(cloudFlush,1000); }
 async function cloudFlush(){
-  if(!sb||!user)return;
+  if(!sb)return;
+  // Récupère explicitement l'utilisateur connecté (demande : supabase.auth.getUser())
+  if(!user){ try{const {data,error}=await sb.auth.getUser(); if(error)console.error("[cloud] getUser erreur:",error); user=data?data.user:null;}catch(e){console.error("[cloud] getUser exception:",e);} }
+  if(!user){ console.warn("[cloud] aucun utilisateur connecté → synchronisation ignorée"); return; }
   try{
     const rows=[];
-    DB.tournaments.forEach(t=>{const s=tsig(t);if(_cloudSig[t.id]!==s)rows.push({id:t.id,user_id:user.id,updated_at:t.updatedAt||Date.now(),payload:t,_s:s});});
-    if(rows.length){syncSet("sync");const {error}=await sb.from("tournaments").upsert(rows.map(r=>({id:r.id,user_id:r.user_id,updated_at:r.updated_at,payload:r.payload})));if(error)throw error;rows.forEach(r=>_cloudSig[r.id]=r._s);}
+    DB.tournaments.forEach(t=>{const s=tsig(t);if(_cloudSig[t.id]!==s)rows.push({_id:t.id,_s:s,row:{id:t.id,user_id:user.id,name:t.name||null,event_date:t.date||null,data:t,updated_at:t.updatedAt||Date.now()}});});
+    if(rows.length){
+      syncSet("sync");
+      console.log("[cloud] upsert de",rows.length,"tournoi(s) → table 'tournaments', user_id =",user.id,"| ids :",rows.map(r=>r._id));
+      const {data,error}=await sb.from("tournaments").upsert(rows.map(r=>r.row),{onConflict:"id"}).select();
+      if(error){ console.error("[cloud] ❌ ERREUR upsert Supabase :",error,"\n  message :",error.message,"\n  details :",error.details,"\n  hint :",error.hint,"\n  code :",error.code); throw error; }
+      console.log("[cloud] ✅ upsert OK :",data?data.length:0,"ligne(s) enregistrée(s)");
+      rows.forEach(r=>_cloudSig[r._id]=r._s);
+    }
     const ids=new Set(DB.tournaments.map(t=>t.id));
     const gone=Object.keys(_cloudSig).filter(id=>!ids.has(id));
-    if(gone.length){const {error}=await sb.from("tournaments").delete().in("id",gone);if(error)throw error;gone.forEach(id=>delete _cloudSig[id]);}
+    if(gone.length){
+      console.log("[cloud] suppression de",gone.length,"tournoi(s) :",gone);
+      const {error}=await sb.from("tournaments").delete().in("id",gone);
+      if(error){ console.error("[cloud] ❌ ERREUR delete Supabase :",error,error.message,error.details,error.hint,error.code); throw error; }
+      gone.forEach(id=>delete _cloudSig[id]);
+    }
     syncSet("ok");
-  }catch(e){ syncSet("offline"); }
+  }catch(e){ console.error("[cloud] ❌ synchronisation échouée :",e&&e.message,e); syncSet("error"); }
 }
 function syncSet(s){ syncState=s; const el=document.getElementById("syncBadge"); if(el)el.outerHTML=syncBadge(); }
 function syncBadge(){
-  const map={idle:["#71717A","En attente"],sync:["#1E40AF","Enregistrement…"],ok:["#16A34A","Synchronisé"],offline:["#B45309","Hors-ligne — local"]};
+  const map={idle:["#71717A","En attente"],sync:["#1E40AF","Enregistrement…"],ok:["#16A34A","Synchronisé"],offline:["#B45309","Hors-ligne — local"],error:["#DC2626","Erreur — voir console (F12)"]};
   const v=map[syncState]||map.idle;
   return `<span id="syncBadge" class="cloud-badge ${syncState}"><span class="cb-dot" style="background:${v[0]}"></span>${v[1]}</span>`;
 }
@@ -507,7 +525,7 @@ async function authSubmit(){
       const {error}=await sb.auth.signInWithPassword({email,password:pass});
       if(error)throw error;
     }
-  }catch(e){ authErr=traduitAuth(e&&e.message); render(); }
+  }catch(e){ console.error("[auth] erreur:",e&&e.message,e); authErr=traduitAuth(e&&e.message); render(); }
 }
 function traduitAuth(m){m=m||"";if(/Invalid login/i.test(m))return "E-mail ou mot de passe incorrect.";if(/already registered|already been registered/i.test(m))return "Cet e-mail a déjà un compte. Connecte-toi.";if(/Password should|at least 6/i.test(m))return "Mot de passe trop court (6 caractères minimum).";if(/Email not confirmed/i.test(m))return "E-mail non confirmé — vérifie ta boîte mail.";if(/Unable to validate email|valid email/i.test(m))return "Adresse e-mail invalide.";return m;}
 async function logout(){ try{await sb.auth.signOut();}catch(e){} user=null;currentId=null;DB={tournaments:[]};_cloudSig={};render(); }

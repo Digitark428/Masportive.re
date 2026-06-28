@@ -14,6 +14,7 @@ depuis n'importe quel appareil en se connectant avec le même compte.
 ### 1. Supabase — base de données
 1. Sur **supabase.com**, ouvre ton projet (ou crée-en un).
 2. Menu **SQL Editor** → **New query** → colle le contenu de `supabase_setup.sql` → **Run**.
+   > ⚠️ Cette version **recrée** la table `tournaments` au bon format (colonnes `id` texte, `data`, `name`, `event_date`, `updated_at`). Comme la table était vide, rien n'est perdu. C'était la cause de l'erreur 400.
 
 ### 2. Supabase — comptes (e-mail / mot de passe)
 1. Menu **Authentication → Sign In / Providers** : vérifie que **Email** est activé.
@@ -45,3 +46,13 @@ Après déploiement, **redéploie** si tu viens d'ajouter les variables d'enviro
 - L'app charge la librairie Supabase et la config au démarrage : une connexion Internet est nécessaire.
 - En cas de coupure réseau, l'app continue en local et resynchronise ensuite.
 - L'URL et la clé « anon » sont publiques par conception ; la sécurité repose sur l'authentification + les règles RLS du fichier SQL (chacun ne voit que ses tournois).
+
+
+## En cas de problème (diagnostic)
+L'app écrit des journaux détaillés dans la **console du navigateur** (touche **F12** → onglet *Console*) :
+- `[cloud] config chargée…` : les variables Vercel sont bien lues.
+- `[cloud] utilisateur connecté : …` : l'auth fonctionne.
+- `[cloud] ✅ upsert OK` : un tournoi a bien été enregistré dans Supabase.
+- `[cloud] ❌ ERREUR upsert Supabase : …` : affiche le **message exact** renvoyé par Supabase (message, details, hint, code) — utile si une colonne ou une policy ne correspond pas.
+
+Si tu vois encore une erreur, ouvre la console (F12), reproduis, et envoie-moi la ligne `❌ ERREUR` complète.
