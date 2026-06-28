@@ -369,6 +369,7 @@ input:focus,select:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(24,24
 /* cloud */
 .cloud-badge{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;background:#fff;border:1px solid var(--line);padding:5px 11px;border-radius:999px;white-space:nowrap}
 .cloud-badge .cb-dot{width:8px;height:8px;border-radius:50%}
+.user-pill{display:inline-flex;align-items:center;font-size:12px;font-weight:600;color:var(--ink-soft);background:var(--sand-2);border:1px solid var(--line);padding:5px 11px;border-radius:999px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cloud-badge.saving .cb-dot,.cloud-badge.connecting .cb-dot{animation:vp-pulse 1.4s infinite}
 .cloud-card{border-color:#D9E2F2;background:linear-gradient(180deg,#FAFBFE,#fff)}
 .cloud-card pre{background:#0f172a;color:#e2e8f0;padding:13px 15px;border-radius:12px;font-size:11.5px;overflow-x:auto;line-height:1.5;margin:8px 0}
@@ -395,9 +396,7 @@ const DEFAULT=()=>({
   config:{name:"Tournoi Cap Homard",poolSizeTarget:5,qualifPerPool:3,points:21,rankMode:"wins",courts:5,courtNames:["Terrain 1","Terrain 2","Terrain 3","Terrain 4","Terrain 5"],centralIndex:-1,demoTeams:40},
   teams:[], qualif:{pools:null}, haute:{pools:null}, basse:{pools:null}, finals:{haute:null,basse:null}
 });
-const CREDS={user:"volleypei",pass:"volleypei974"};
-let DB=loadDB()||migrate()||{tournaments:[]};
-let authed=localStorage.getItem("capAuth")==="1";
+let DB={tournaments:[]};
 let currentId=null, route="config", finalTab="haute", editId=null;
 let S=DEFAULT(); // référence vivante vers le tournoi ouvert
 function loadDB(){try{const r=localStorage.getItem("capHomardDB");return r?JSON.parse(r):null;}catch(e){return null;}}
@@ -406,14 +405,10 @@ function migrate(){ // récupère un éventuel ancien tournoi unique
   return null;
 }
 function cur(){return DB.tournaments.find(t=>t.id===currentId);}
-function persist(){try{if(currentId){const t=cur();if(t)t.updatedAt=Date.now();}localStorage.setItem("capHomardDB",JSON.stringify(DB));localStorage.setItem("capAuth",authed?"1":"0");}catch(e){}scheduleCloudSync();}
+function persist(){try{if(currentId){const t=cur();if(t)t.updatedAt=Date.now();}if(user)localStorage.setItem(userKey(),JSON.stringify(DB));}catch(e){}scheduleCloudSync();}
 const save=persist; // les fonctions du moteur appellent save()
-/* ===================== SAUVEGARDE CLOUD (Supabase) ===================== */
-let sb=null, cloudStatus="off", cloudMsg="", _cloudTimer=null, _cloudSig={}, _cloudLib=null;
-function loadCloudCfg(){try{return JSON.parse(localStorage.getItem("capCloud"))||{}}catch(e){return {}}}
-function saveCloudCfg(c){try{localStorage.setItem("capCloud",JSON.stringify(c));}catch(e){}}
-function tsig(t){return JSON.stringify({n:t.name,d:t.date,l:t.location,c:t.createdAt,s:t.state});}
-function cloudSetStatus(s,m){cloudStatus=s;cloudMsg=m||"";const el=document.getElementById("cloudStatus");if(el)el.outerHTML=cloudBadge();}
+/* ===================== SAAS : AUTH + SYNCHRO SUPABASE ===================== */
+let sb=null, user=null, bootErr=null, syncState="idle", authMode="in", authErr="", _cloudTimer=null, _cloudSig={}, _cloudLib=null, _lastUid=null;
 function loadSupabaseLib(){
   if(typeof supabase!=="undefined")return Promise.resolve();
   if(_cloudLib)return _cloudLib;
@@ -421,94 +416,101 @@ function loadSupabaseLib(){
     const s=document.createElement("script");
     s.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js";
     s.onload=()=>typeof supabase!=="undefined"?res():rej(new Error("Librairie illisible"));
-    s.onerror=()=>rej(new Error("Librairie Supabase inaccessible (hors-ligne ?)"));
+    s.onerror=()=>rej(new Error("Librairie Supabase inaccessible"));
     document.head.appendChild(s);
     setTimeout(()=>{if(typeof supabase==="undefined")rej(new Error("Délai dépassé"));},12000);
   });
   return _cloudLib;
 }
-async function initCloud(){
-  const c=loadCloudCfg();
-  if(!c.enabled||!c.url||!c.key){cloudStatus="off";return;}
-  cloudSetStatus("connecting","Connexion au cloud…");if(authed&&!currentId)render();
-  try{ await loadSupabaseLib(); sb=supabase.createClient(c.url,c.key); await cloudPull(); cloudStatus="online"; await cloudFlush(); cloudSetStatus("online","Synchronisé"); render(); }
-  catch(e){ sb=null; cloudSetStatus("offline","Hors-ligne — sauvegarde locale"); if(authed&&!currentId)render(); }
+async function boot(){
+  try{
+    let cfg;
+    try{ cfg=await fetch("/api/config",{cache:"no-store"}).then(r=>r.json()); }
+    catch(e){ throw new Error("Configuration introuvable (/api/config). Le projet doit être déployé sur Vercel avec le dossier api/."); }
+    if(!cfg||!cfg.url||!cfg.anonKey) throw new Error("Variables Supabase manquantes dans Vercel (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).");
+    await loadSupabaseLib();
+    sb=supabase.createClient(cfg.url,cfg.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    sb.auth.onAuthStateChange((_e,session)=>{ onSession(session); });
+    const {data}=await sb.auth.getSession();
+    await onSession(data?data.session:null);
+  }catch(e){ bootErr=e.message||"Erreur d'initialisation"; render(); }
 }
-async function cloudPull(){
-  if(!sb)return;
-  const {data,error}=await sb.from("tournaments").select("id,updated_at,payload");
-  if(error)throw error;
-  const byId={};DB.tournaments.forEach(t=>byId[t.id]=t);
-  (data||[]).forEach(row=>{const local=byId[row.id],remote=row.payload;
-    if(remote&&(!local||(row.updated_at||0)>(local.updatedAt||0)))byId[row.id]=remote;
-    if(byId[row.id])_cloudSig[row.id]=tsig(byId[row.id]);});
-  DB.tournaments=Object.values(byId).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-  try{localStorage.setItem("capHomardDB",JSON.stringify(DB));}catch(e){}
+async function onSession(session){
+  const u=session?session.user:null;
+  const changed=(u?u.id:null)!==_lastUid;
+  user=u; _lastUid=u?u.id:null;
+  if(user){ if(changed){ await cloudLoad(); } }
+  else { DB={tournaments:[]}; currentId=null; _cloudSig={}; }
+  render();
 }
-function scheduleCloudSync(){ if(cloudStatus!=="online"&&cloudStatus!=="saving"&&cloudStatus!=="error")return; clearTimeout(_cloudTimer); _cloudTimer=setTimeout(cloudFlush,1200); }
+function userKey(){return "capDB_"+(user?user.id:"anon");}
+function cacheLocal(){try{localStorage.setItem(userKey(),JSON.stringify(DB));}catch(e){}}
+function loadLocalCache(){try{const r=localStorage.getItem(userKey());return r?JSON.parse(r):null;}catch(e){return null;}}
+function tsig(t){return JSON.stringify({n:t.name,d:t.date,l:t.location,c:t.createdAt,s:t.state});}
+async function cloudLoad(){
+  syncSet("sync");_cloudSig={};
+  try{
+    const {data,error}=await sb.from("tournaments").select("id,updated_at,payload");
+    if(error)throw error;
+    const byId={};
+    (data||[]).forEach(row=>{ if(row.payload){byId[row.id]=row.payload; _cloudSig[row.id]=tsig(row.payload);} });
+    const cache=loadLocalCache();
+    if(cache&&cache.tournaments)cache.tournaments.forEach(t=>{ const r=byId[t.id]; if(!r||(t.updatedAt||0)>(r.updatedAt||0))byId[t.id]=t; });
+    DB={tournaments:Object.values(byId).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))};
+    cacheLocal(); syncSet("ok");
+    await cloudFlush();
+  }catch(e){ const cache=loadLocalCache(); if(cache)DB=cache; syncSet("offline"); }
+}
+function scheduleCloudSync(){ if(!sb||!user)return; clearTimeout(_cloudTimer); _cloudTimer=setTimeout(cloudFlush,1000); }
 async function cloudFlush(){
-  if(!sb)return;
+  if(!sb||!user)return;
   try{
     const rows=[];
-    DB.tournaments.forEach(t=>{const s=tsig(t);if(_cloudSig[t.id]!==s)rows.push({id:t.id,updated_at:t.updatedAt||Date.now(),payload:t,_s:s});});
-    if(rows.length){cloudSetStatus("saving","Sauvegarde…");const {error}=await sb.from("tournaments").upsert(rows.map(r=>({id:r.id,updated_at:r.updated_at,payload:r.payload})));if(error)throw error;rows.forEach(r=>_cloudSig[r.id]=r._s);}
+    DB.tournaments.forEach(t=>{const s=tsig(t);if(_cloudSig[t.id]!==s)rows.push({id:t.id,user_id:user.id,updated_at:t.updatedAt||Date.now(),payload:t,_s:s});});
+    if(rows.length){syncSet("sync");const {error}=await sb.from("tournaments").upsert(rows.map(r=>({id:r.id,user_id:r.user_id,updated_at:r.updated_at,payload:r.payload})));if(error)throw error;rows.forEach(r=>_cloudSig[r.id]=r._s);}
     const ids=new Set(DB.tournaments.map(t=>t.id));
     const gone=Object.keys(_cloudSig).filter(id=>!ids.has(id));
     if(gone.length){const {error}=await sb.from("tournaments").delete().in("id",gone);if(error)throw error;gone.forEach(id=>delete _cloudSig[id]);}
-    cloudSetStatus("online","Synchronisé");
-  }catch(e){cloudSetStatus("error",e.message||"Erreur de synchro");}
+    syncSet("ok");
+  }catch(e){ syncSet("offline"); }
 }
-async function cloudTest(){
-  const url=(document.getElementById("cl_url").value||"").trim(),key=(document.getElementById("cl_key").value||"").trim();
-  if(!url||!key){toast("Renseigne l'URL et la clé");return;}
-  const c=loadCloudCfg();c.url=url;c.key=key;saveCloudCfg(c);
-  cloudSetStatus("connecting","Test de connexion…");
-  try{await loadSupabaseLib();const cl=supabase.createClient(url,key);const {error}=await cl.from("tournaments").select("id").limit(1);if(error)throw error;cloudSetStatus("online","Connexion réussie ✓");toast("Connexion Supabase réussie ✓");}
-  catch(e){cloudSetStatus("error",e.message||"Échec");toast("Échec : vérifie l'URL, la clé et la table");}
-  render();
+function syncSet(s){ syncState=s; const el=document.getElementById("syncBadge"); if(el)el.outerHTML=syncBadge(); }
+function syncBadge(){
+  const map={idle:["#71717A","En attente"],sync:["#1E40AF","Enregistrement…"],ok:["#16A34A","Synchronisé"],offline:["#B45309","Hors-ligne — local"]};
+  const v=map[syncState]||map.idle;
+  return `<span id="syncBadge" class="cloud-badge ${syncState}"><span class="cb-dot" style="background:${v[0]}"></span>${v[1]}</span>`;
 }
-async function cloudEnable(on){
-  const c=loadCloudCfg();
-  c.url=((document.getElementById("cl_url")||{}).value||c.url||"").trim();
-  c.key=((document.getElementById("cl_key")||{}).value||c.key||"").trim();
-  c.enabled=on;saveCloudCfg(c);
-  if(on){await initCloud();}else{sb=null;cloudStatus="off";cloudMsg="";}
-  render();
+function loadingScreen(){return `<div class="auth-wrap"><div class="auth-card" style="text-align:center"><div class="brand" style="justify-content:center;margin-bottom:14px"><div class="ball"></div><div><h1>Cap Homard</h1></div></div><p class="muted">Connexion…</p></div></div>`;}
+function fatalScreen(msg){return `<div class="auth-wrap"><div class="auth-card"><div class="brand" style="justify-content:center;margin-bottom:14px"><div class="ball"></div><div><h1>Cap Homard</h1></div></div><div class="login-err" style="display:block">${esc(msg)}</div><p class="muted tiny" style="margin-top:12px">Vérifie que le projet est déployé sur Vercel avec le dossier <b>api/</b> et les variables <b>VITE_SUPABASE_URL</b> / <b>VITE_SUPABASE_ANON_KEY</b>.</p></div></div>`;}
+function authScreen(){
+  const up=authMode==="up";
+  return `<div class="auth-wrap"><div class="auth-card">
+    <div class="brand" style="justify-content:center;margin-bottom:18px"><div class="ball"></div><div><h1>Cap Homard</h1><small>Gestion de tournoi beach volley</small></div></div>
+    <div class="seg" style="margin-bottom:16px"><button class="${!up?'on':''}" onclick="authMode='in';authErr='';render()">Connexion</button><button class="${up?'on':''}" onclick="authMode='up';authErr='';render()">Créer un compte</button></div>
+    <label class="fld">E-mail</label><input type="email" id="authEmail" autocomplete="email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')authSubmit()">
+    <label class="fld" style="margin-top:12px">Mot de passe</label><input type="password" id="authPass" autocomplete="${up?'new-password':'current-password'}" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit()">
+    ${authErr?`<div class="login-err" style="display:block">${esc(authErr)}</div>`:''}
+    <button class="btn primary" style="width:100%;justify-content:center;margin-top:16px" onclick="authSubmit()">${up?'Créer mon compte':'Se connecter'}</button>
+    <p class="muted tiny" style="text-align:center;margin-top:14px">${up?'Tu as déjà un compte ? Clique « Connexion ».':'Première fois ? Clique « Créer un compte ».'}</p>
+  </div></div>`;
 }
-function cloudBadge(){
-  const map={off:["#71717A","Cloud désactivé"],connecting:["#1E40AF","Connexion…"],online:["#16A34A","Cloud synchronisé"],saving:["#1E40AF","Sauvegarde…"],offline:["#B45309","Hors-ligne"],error:["#DC2626","Erreur cloud"]};
-  const v=map[cloudStatus]||map.off;
-  return `<span id="cloudStatus" class="cloud-badge ${cloudStatus}" title="${esc(cloudMsg||v[1])}"><span class="cb-dot" style="background:${v[0]}"></span>${v[1]}</span>`;
+async function authSubmit(){
+  authErr="";
+  const email=(document.getElementById("authEmail").value||"").trim(), pass=document.getElementById("authPass").value||"";
+  if(!email||!pass){authErr="Renseigne ton e-mail et ton mot de passe.";render();return;}
+  try{
+    if(authMode==="up"){
+      const {data,error}=await sb.auth.signUp({email,password:pass});
+      if(error)throw error;
+      if(!data.session){ authErr="Compte créé. Vérifie tes e-mails pour confirmer, puis connecte-toi."; authMode="in"; render(); return; }
+    } else {
+      const {error}=await sb.auth.signInWithPassword({email,password:pass});
+      if(error)throw error;
+    }
+  }catch(e){ authErr=traduitAuth(e&&e.message); render(); }
 }
-function cloudCard(){
-  const c=loadCloudCfg();
-  const sql=`create table if not exists public.tournaments (
-  id text primary key,
-  updated_at bigint not null default 0,
-  payload jsonb not null
-);
-alter table public.tournaments enable row level security;
-create policy "acces_app" on public.tournaments
-  for all to anon using (true) with check (true);`;
-  return `<div class="card cloud-card">
-    <div class="spread"><div><h3 class="sec" style="margin:0">☁️ Sauvegarde cloud (Supabase)</h3>
-      <p class="muted tiny" style="margin:4px 0 0">Enregistre automatiquement tous tes tournois en ligne, accessibles depuis n'importe quel appareil. Sans cloud, tout reste sauvegardé en local sur cet appareil.</p></div>
-      ${cloudBadge()}</div>
-    <div class="grid cols-2" style="margin-top:14px">
-      <div><label class="fld">URL du projet</label><input type="text" id="cl_url" placeholder="https://xxxx.supabase.co" value="${esc(c.url||'')}"></div>
-      <div><label class="fld">Clé publique (anon)</label><input type="text" id="cl_key" placeholder="eyJhbGciOi…" value="${esc(c.key||'')}"></div>
-    </div>
-    <div class="row" style="margin-top:12px">
-      <button class="btn" onclick="cloudTest()">Tester la connexion</button>
-      ${c.enabled?`<button class="btn danger" onclick="cloudEnable(false)">Désactiver</button>`:`<button class="btn primary" onclick="cloudEnable(true)">Activer la sauvegarde cloud</button>`}
-      ${cloudStatus==='online'?`<button class="btn sea" onclick="cloudPull().then(render).catch(()=>toast('Erreur de rechargement'))">↻ Recharger depuis le cloud</button>`:''}
-    </div>
-    <details class="cloud-sql" style="margin-top:14px"><summary>1 fois : créer la table dans Supabase (SQL)</summary>
-      <pre>${esc(sql)}</pre>
-      <p class="muted tiny" style="margin:6px 0 0">Sur <b>supabase.com</b> → ton projet → <b>SQL Editor</b> → colle ce script → <b>Run</b>. Puis récupère l'<b>URL</b> et la clé <b>anon public</b> dans <b>Project Settings → API</b>, colle-les ci-dessus, et clique « Activer ».</p>
-    </details>
-  </div>`;
-}
+function traduitAuth(m){m=m||"";if(/Invalid login/i.test(m))return "E-mail ou mot de passe incorrect.";if(/already registered|already been registered/i.test(m))return "Cet e-mail a déjà un compte. Connecte-toi.";if(/Password should|at least 6/i.test(m))return "Mot de passe trop court (6 caractères minimum).";if(/Email not confirmed/i.test(m))return "E-mail non confirmé — vérifie ta boîte mail.";if(/Unable to validate email|valid email/i.test(m))return "Adresse e-mail invalide.";return m;}
+async function logout(){ try{await sb.auth.signOut();}catch(e){} user=null;currentId=null;DB={tournaments:[]};_cloudSig={};render(); }
 function uid(){return Math.random().toString(36).slice(2,9);}
 
 /* ===================== MOTEUR ===================== */
@@ -874,7 +876,9 @@ function render(){
   const root=document.getElementById("root");
   const sp=parseHash();
   if(sp){renderSpectator(sp,root);return;}
-  if(!authed){root.innerHTML=loginScreen();persist();return;}
+  if(bootErr){root.innerHTML=fatalScreen(bootErr);return;}
+  if(!sb){root.innerHTML=loadingScreen();return;}
+  if(!user){root.innerHTML=authScreen();return;}
   if(!currentId||!cur()){currentId=null;root.innerHTML=homeScreen();persist();return;}
   S=cur().state;
   root.innerHTML=`<div class="app"><aside class="sidebar">
@@ -938,21 +942,9 @@ function journalFinals(){
 }
 
 /* ===================== CONNEXION ===================== */
-function loginScreen(){
-  return `<div class="auth-wrap"><div class="auth-card">
-    <div class="brand" style="justify-content:center;margin-bottom:18px"><div class="ball"></div><div><h1 style="color:var(--ink)">Cap Homard</h1><small style="color:var(--ink-soft)">Gestion de tournoi beach volley</small></div></div>
-    <label class="fld">Nom d'utilisateur</label><input type="text" id="loginUser" autocomplete="username" placeholder="volleypei" onkeydown="if(event.key==='Enter')login()">
-    <label class="fld" style="margin-top:12px">Mot de passe</label><input type="password" id="loginPass" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
-    <div id="loginErr" class="login-err"></div>
-    <button class="btn primary" style="width:100%;justify-content:center;margin-top:16px" onclick="login()">Se connecter</button>
-  </div></div>`;
-}
-function login(){
-  const u=(document.getElementById("loginUser").value||"").trim(),p=document.getElementById("loginPass").value||"";
-  if(u===CREDS.user&&p===CREDS.pass){authed=true;persist();render();}
-  else document.getElementById("loginErr").textContent="Identifiants incorrects. Accès refusé.";
-}
-function logout(){authed=false;currentId=null;persist();render();}
+
+
+
 
 /* ===================== ACCUEIL / MULTI-TOURNOIS ===================== */
 function tournamentStatus(st){
@@ -985,10 +977,9 @@ function homeScreen(){
   return `<div class="home">
     <header class="home-head">
       <div class="brand"><div class="ball"></div><div><h1>Cap Homard</h1><small>Gestion de tournoi beach volley</small></div></div>
-      <div class="spread" style="gap:12px">${cloudBadge()}<button class="btn ghost sm" onclick="logout()">⏻ Déconnexion</button></div>
+      <div class="spread" style="gap:12px">${syncBadge()}<span class="user-pill">${esc((user&&user.email)||'')}</span><button class="btn ghost sm" onclick="logout()">⏻ Déconnexion</button></div>
     </header>
     <div class="home-body">
-      ${cloudCard()}
       <div class="card create-card">
         <h3 class="sec" style="margin-bottom:12px">Créer un nouveau tournoi</h3>
         <div class="grid cols-3">
@@ -1609,8 +1600,7 @@ function teamCard(id){
   return `<div class="card team-card"><div class="tc-head"><div class="tc-name">${esc(teamName(id))}</div>${statusBadge(j.status)}</div>${steps||'<p class="muted tiny">Pas encore de match joué.</p>'}</div>`;
 }
 
-render();
-initCloud();
+boot();
 </script>
 </body>
 </html>
