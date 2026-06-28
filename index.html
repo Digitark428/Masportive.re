@@ -4,12 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Cap Homard — Gestion de Tournoi Beach Volley</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --sand:#F6F1E7;--sand-2:#EFE7D6;--ink:#1C1B19;--ink-soft:#55504a;
-  --line:#E2D9C8;--card:#FFFFFF;--coral:#E8643C;--coral-d:#cf5430;
-  --sea:#0E7C7B;--sea-d:#0a6160;--gold:#C9A227;--ok:#2c8a4a;--bad:#c1473a;
-  --shadow:0 1px 2px rgba(28,27,25,.05),0 8px 24px rgba(28,27,25,.06);--radius:14px;
+  --sand:#FAFAFA;--sand-2:#F4F4F5;--ink:#18181B;--ink-soft:#71717A;
+  --line:#E4E4E7;--card:#FFFFFF;
+  --coral:#DC2626;--coral-d:#B91C1C;
+  --sea:#1E40AF;--sea-d:#1E3A8A;--gold:#F59E0B;
+  --blue:#1E40AF;--yellow:#F59E0B;--red:#DC2626;
+  --ok:#16A34A;--bad:#DC2626;
+  --shadow-soft:0 1px 2px rgba(24,24,27,.04),0 6px 20px rgba(24,24,27,.05);
+  --shadow-card:0 1px 3px rgba(24,24,27,.05),0 12px 32px rgba(24,24,27,.07);
+  --shadow-lift:0 16px 48px rgba(24,24,27,.14);
+  --shadow-premium:0 24px 70px rgba(24,24,27,.20);
+  --shadow:var(--shadow-soft);--radius:18px;
+  --font-display:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;
+  --font-body:'Inter',ui-sans-serif,system-ui,-apple-system,sans-serif;
 }
 *{box-sizing:border-box}html,body{margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -248,6 +260,112 @@ label.fld{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);mar
 .qual-list .q-out{opacity:.72}.qual-list .q-out .q-badge{background:#F7E0DC;color:var(--bad)}
 .qual-list .cutline{flex-basis:100%;text-align:center;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--coral);margin:4px 0;border-top:1px dashed var(--coral);padding-top:6px}
 .qual-list sup{font-size:.7em}
+
+/* ===================== VOLLEY PÉI — DESIGN SYSTEM ===================== */
+body{font-family:var(--font-body);background:var(--sand);letter-spacing:-.005em}
+::selection{background:var(--ink);color:#fff}
+.brand h1,.page-head h2,.empty h4,.tc-name,.auth-card .brand h1{font-family:var(--font-display);letter-spacing:-.02em}
+.page-head h2{font-weight:700;letter-spacing:-.03em;font-size:30px}
+/* eyebrow -> live pill */
+.eyebrow{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);color:var(--ink);padding:5px 12px;border-radius:999px;font-size:11px;letter-spacing:.06em;box-shadow:var(--shadow-soft)}
+.eyebrow::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--red);animation:vp-pulse 1.8s infinite}
+/* sidebar -> light glass */
+.sidebar{background:rgba(255,255,255,.72);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-right:1px solid var(--line);color:var(--ink)}
+.brand .ball{background:conic-gradient(from 210deg,var(--blue),var(--yellow),var(--red),var(--blue));box-shadow:none}
+.brand small{color:var(--ink-soft)}
+.tname{color:var(--ink-soft);border-top-color:var(--line)}
+nav a{color:var(--ink-soft);border-radius:12px;font-weight:500}
+nav a .n{background:var(--sand-2);color:var(--ink-soft);border-radius:8px}
+nav a:hover{background:var(--sand-2);color:var(--ink)}
+nav a.active{background:var(--ink);color:#fff}
+nav a.active .n{background:rgba(255,255,255,.2);color:#fff}
+.side-foot{border-top-color:var(--line)}
+.side-foot button{background:#fff;border:1px solid var(--line);color:var(--ink-soft)}
+.side-foot button:hover{background:var(--sand-2);color:var(--ink)}
+.side-foot button.demo{background:var(--ink);border-color:var(--ink);color:#fff}
+.side-foot button.demo:hover{background:#000}
+.side-foot button.danger:hover{background:var(--red);border-color:var(--red);color:#fff}
+/* cards */
+.card{border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow-soft);transition:box-shadow .3s cubic-bezier(.22,1,.36,1),transform .3s cubic-bezier(.22,1,.36,1)}
+.card:hover{box-shadow:var(--shadow-card)}
+/* buttons */
+.btn{border-radius:12px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);transition:.18s cubic-bezier(.22,1,.36,1)}
+.btn:hover{background:var(--sand-2);transform:translateY(-1px)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.primary:hover{background:#000;border-color:#000}
+.btn.sea{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.sea:hover{background:var(--sea-d);border-color:var(--sea-d)}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.ghost:hover{background:var(--sand-2)}
+.btn.pill{border-radius:999px}
+.btn.sm{border-radius:10px}
+/* inputs */
+input[type=text],input[type=number],input[type=password],select{border-radius:12px;border-color:var(--line)}
+input:focus,select:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(24,24,27,.08)}
+/* seg / pills / badges */
+.seg{border-radius:12px}
+.seg button.on{background:var(--ink);color:#fff}
+.pill{border-radius:999px;font-weight:600}
+.pill.ok{background:#E8F6EC;color:#15803D}
+.pill.warn{background:#FEF3E2;color:#B45309}
+.pill.court{background:#EAF0FF;color:var(--sea-d)}
+.bracket-tabs button{border-radius:14px}
+.bracket-tabs button.active{background:var(--ink);border-color:var(--ink);color:#fff}
+/* tabular numbers */
+.standtbl,.standtbl td,.standtbl th{font-variant-numeric:tabular-nums}
+/* notes / journal -> neutral */
+.note{background:#F7F8FA;border:1px solid var(--line);border-radius:14px;color:var(--ink-soft)}
+.note b{color:var(--ink)}
+.journal{background:#F7F8FA;border-color:var(--line);border-left:3px solid var(--blue)}
+.journal .jh{color:var(--sea-d)}
+/* home header -> glass white */
+.home-head{background:rgba(255,255,255,.72);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);color:var(--ink);border-bottom:1px solid var(--line)}
+.home-head .brand h1{color:var(--ink);font-family:var(--font-display)}
+.home-head .brand small{color:var(--ink-soft)}
+.home-head .brand .ball{background:conic-gradient(from 210deg,var(--blue),var(--yellow),var(--red),var(--blue))}
+.t-grid>*{animation:vp-fade-up .5s cubic-bezier(.22,1,.36,1) both}
+.t-grid>*:nth-child(2){animation-delay:.06s}.t-grid>*:nth-child(3){animation-delay:.12s}.t-grid>*:nth-child(4){animation-delay:.18s}.t-grid>*:nth-child(5){animation-delay:.24s}.t-grid>*:nth-child(6){animation-delay:.3s}
+/* login -> halo + glass + tricolore */
+.auth-wrap{background:radial-gradient(900px 520px at 28% -12%,rgba(30,64,175,.13),transparent 60%),radial-gradient(820px 520px at 82% -4%,rgba(245,158,11,.14),transparent 55%),var(--sand)}
+.auth-card{border-radius:28px;box-shadow:var(--shadow-card);position:relative;overflow:hidden}
+.auth-card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--blue) 0 33.3%,var(--yellow) 33.3% 66.6%,var(--red) 66.6% 100%)}
+.auth-card .brand .ball{background:conic-gradient(from 210deg,var(--blue),var(--yellow),var(--red),var(--blue))}
+/* spectator -> glass white header */
+.spec-head{background:rgba(255,255,255,.82);-webkit-backdrop-filter:saturate(180%) blur(18px);backdrop-filter:saturate(180%) blur(18px);color:var(--ink);border-bottom:1px solid var(--line)}
+.spec-head .brand h1{color:var(--ink);font-family:var(--font-display)}
+.spec-head .brand small{color:var(--ink-soft)}
+.spec-head .brand .ball{background:conic-gradient(from 210deg,var(--blue),var(--yellow),var(--red),var(--blue))}
+.live-badge{background:var(--ink);color:#fff}
+.spec-tabs{top:53px;background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.spec-tabs button.on{color:var(--ink);border-bottom-color:var(--ink)}
+.spec-sec.coral{color:var(--red)}.spec-sec.sea{color:var(--blue)}
+/* QR / qualif accents */
+.qr-box{border-radius:18px}
+.qual-list .cutline{color:var(--ink);border-top-color:var(--ink)}
+/* animations */
+@keyframes vp-fade-up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes vp-pulse{0%{box-shadow:0 0 0 0 rgba(220,38,38,.5)}70%{box-shadow:0 0 0 8px rgba(220,38,38,0)}100%{box-shadow:0 0 0 0 rgba(220,38,38,0)}}
+.wrap>*{animation:vp-fade-up .5s cubic-bezier(.22,1,.36,1) both}
+.wrap>*:nth-child(2){animation-delay:.05s}.wrap>*:nth-child(3){animation-delay:.1s}.wrap>*:nth-child(4){animation-delay:.15s}.wrap>*:nth-child(5){animation-delay:.2s}.wrap>*:nth-child(6){animation-delay:.25s}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.stress-live:empty{display:none}
+.stress-live{margin-top:14px}
+.stress-bar{height:9px;border-radius:99px;background:var(--sand-2);overflow:hidden}
+.stress-bar span{display:block;height:100%;background:var(--ink);transition:width .25s cubic-bezier(.22,1,.36,1)}
+.stress-stat{font-size:12.5px;color:var(--ink-soft);margin-top:9px;font-variant-numeric:tabular-nums}
+.stress-stat b{color:var(--ink)}
+.stress-stat .okk{color:var(--ok);font-weight:700}
+.stress-stat .anom{color:var(--bad);font-weight:800}
+.stress-bar.indet{position:relative}
+.stress-bar.indet span{position:absolute;left:0;width:38%;background:var(--ink);animation:vp-indet 1.1s infinite cubic-bezier(.65,.05,.36,1)}
+@keyframes vp-indet{0%{left:-40%}100%{left:102%}}
+.verdict{margin-top:14px;border-radius:16px;padding:15px 17px;border:1px solid}
+.verdict .vh{font-family:var(--font-display);font-weight:700;font-size:16px;margin-bottom:5px}
+.verdict .vb{font-size:13px;line-height:1.5}
+.verdict .vb ul{margin:8px 0 4px;padding-left:18px}.verdict .vb li{margin:3px 0}
+.verdict.ok{background:#E9F6EE;border-color:#BBE0C7;color:#15692f}.verdict.ok .vh{color:#15803d}
+.verdict.bad{background:#FBEAE5;border-color:#EEC4B6;color:#8a3320}.verdict.bad .vh{color:var(--bad)}
 </style>
 </head>
 <body>
@@ -409,6 +527,93 @@ function runDiagnostic(){
   const res=capSelfTest(2000);
   S._diag=res;render();
   toast(res.ok?"Auto-test réussi ✓":"Auto-test : "+res.failCount+" anomalie(s)");
+}
+/* ============ STRESS-TEST DE CONFIGURATION (simulations de tournois complets) ============ */
+function _simState(cfg,teamCount){
+  const teams=[];for(let i=0;i<teamCount;i++)teams.push({id:"s"+i,name:"E"+(i+1),seed:i<8});
+  return {config:cfg,teams,qualif:{pools:null},haute:{pools:null},basse:{pools:null},finals:{haute:null,basse:null}};
+}
+function stressSimulate(){ // S doit déjà pointer sur un état de simulation neuf
+  drawPools();
+  S.qualif.pools.forEach(p=>p.scores=p.matches.map(()=>randScore()));
+  buildHB();
+  if(S.haute.pools)S.haute.pools.forEach(p=>p.scores=p.matches.map(()=>randScore()));
+  if(S.basse.pools&&S.basse.pools.length)S.basse.pools.forEach(p=>p.scores=p.matches.map(()=>randScore()));
+  S.finals={haute:null,basse:null};ensureFinals(true);
+}
+function stressCheck(teamCount){
+  const fails=[];let checks=0;const A=(c,m)=>{checks++;if(!c)fails.push(m);};
+  const qpp=S.config.qualifPerPool,wins=(S.config.rankMode||"wins")==="wins";
+  const qp=S.qualif.pools||[];
+  let sum=0;
+  qp.forEach((p,i)=>{const n=p.teams.length;sum+=n;
+    A(n>qpp,"poule qualif "+(i+1)+" : taille "+n+" ≤ qualifiés "+qpp);
+    A(n<=6,"poule qualif "+(i+1)+" : taille "+n+" >6");
+    A(p.matches.length===n*(n-1)/2,"poule qualif "+(i+1)+" : nb de matchs incohérent");
+    const o1=rankPool(p),o2=rankPool(p);
+    A(o1.map(x=>x.id).join()===o2.map(x=>x.id).join(),"classement non déterministe (poule "+(i+1)+")");
+    A(o1.length===n&&new Set(o1.map(x=>x.id)).size===n,"classement incomplet (poule "+(i+1)+")");
+    if(wins)for(let k=0;k<o1.length-1;k++)A(o1[k].w>=o1[k+1].w,"victoires inversées (poule "+(i+1)+")");
+  });
+  A(sum===teamCount,"total équipes en qualif "+sum+" ≠ "+teamCount);
+  const H=S.haute.pools||[],B=S.basse.pools||[];
+  let hc=0,bc=0;H.forEach(p=>hc+=p.teams.length);B.forEach(p=>bc+=p.teams.length);
+  A(hc+bc===teamCount,"Haut+Conso "+(hc+bc)+" ≠ "+teamCount);
+  A(hc===qp.length*qpp+(S._repeche?S._repeche.count:0),"Tableau Haut "+hc+" ≠ "+(qp.length*qpp)+" + repêchés");
+  if(S._repeche&&S._repeche.count){const qSet=new Set();qp.forEach(p=>rankPool(p).slice(0,qpp).forEach(x=>qSet.add(x.id)));
+    S._repeche.ids.forEach(id=>A(!qSet.has(id),"repêché déjà qualifié (descente interdite)"));}
+  [["Haut",H],["Conso",B]].forEach(([lab,arr])=>arr.forEach((p,i)=>{const n=p.teams.length;
+    A(n<=6,"poule "+lab+" "+(i+1)+" : taille "+n+" >6");
+    A(n>=2,"poule "+lab+" "+(i+1)+" : taille "+n+" <2");
+    A(p.matches.length===n*(n-1)/2,"poule "+lab+" "+(i+1)+" : nb de matchs incohérent");}));
+  const checkBr=(br,pools,lab)=>{const q=pools.reduce((a,p)=>a+p.teams.length,0);
+    if(!br){A(q<2,"tableau "+lab+" manquant malgré "+q+" équipes");return;}
+    A((br.size&(br.size-1))===0,"tableau "+lab+" : taille "+br.size+" non puissance de 2");
+    A(br.size<=q,"tableau "+lab+" : "+br.size+" > qualifiés "+q);
+    const r0=br.rounds[0],ids=[];r0.forEach(m=>{if(m.a)ids.push(m.a.id);if(m.b)ids.push(m.b.id);});
+    A(ids.length===br.size&&new Set(ids).size===br.size,"tableau "+lab+" : équipes dupliquées/manquantes");
+    advance(br);A(!!bWin(br.rounds[br.rounds.length-1][0]),"tableau "+lab+" : pas de vainqueur");};
+  checkBr(S.finals.haute,H,"principal");checkBr(S.finals.basse,B,"consolante");
+  let reM=0;
+  if(qp.length){const co=new Map();qp.forEach(p=>p.teams.forEach(a=>{const s=co.get(a)||new Set();p.teams.forEach(b=>{if(b!==a)s.add(b);});co.set(a,s);}));
+    const cnt=arr=>{let c=0;arr.forEach(p=>{for(let i=0;i<p.teams.length;i++)for(let j=i+1;j<p.teams.length;j++){const s=co.get(p.teams[i]);if(s&&s.has(p.teams[j]))c++;}});return c;};
+    reM=cnt(H)+cnt(B);}
+  return {checks,fails,reM};
+}
+function capConfigStress(teamCount,cfg,budgetMs){ // version synchrone (tests)
+  const t0=Date.now();let sims=0,checks=0,reM=0;const fails=[];const prev=S;
+  try{while(Date.now()-t0<budgetMs){S=_simState(cfg,teamCount);
+    try{stressSimulate();const r=stressCheck(teamCount);checks+=r.checks;reM+=r.reM;if(r.fails.length)fails.push(...r.fails.slice(0,2));}
+    catch(e){fails.push("exception: "+e.message);}sims++;}}
+  finally{S=prev;}
+  return {sims,checks,reM,fails:fails.slice(0,15),failCount:fails.length,ok:fails.length===0,ms:Date.now()-t0,teamCount};
+}
+let _stressRun=false,_stressStop=false;
+function stopConfigStress(){_stressStop=true;}
+async function runConfigStress(){
+  if(_stressRun)return;_stressRun=true;_stressStop=false;
+  const userS=S,cfg=JSON.parse(JSON.stringify(userS.config));
+  const mn=(userS.config.qualifPerPool||3)+1;
+  const teamCount=(userS.teams&&userS.teams.length>=mn+1)?userS.teams.length:Math.max(mn*2,userS.config.demoTeams||40);
+  S._stress={running:true};render();
+  const SAFETY=900000,t0=Date.now();let sims=0,checks=0,reM=0;const fails=[]; // garde-fou : 15 min max
+  const upd=()=>{const el=document.getElementById("stressLive");if(!el)return;const secs=Math.round((Date.now()-t0)/1000);
+    const anom=fails.length?`<span class="anom">${fails.length} anomalie(s)</span>`:`<span class="okk">0 erreur</span>`;
+    el.innerHTML=`<div class="stress-bar indet"><span></span></div><div class="stress-stat"><b>${sims.toLocaleString('fr')}</b> simulations · <b>${checks.toLocaleString('fr')}</b> vérifications · ${secs}s · ${anom}</div>`;};
+  while(!_stressStop&&Date.now()-t0<SAFETY&&fails.length<60){
+    const bs=Date.now();
+    while(Date.now()-bs<90&&!_stressStop){
+      S=_simState(cfg,teamCount);
+      try{stressSimulate();const r=stressCheck(teamCount);checks+=r.checks;reM+=r.reM;if(r.fails.length)fails.push(...r.fails.slice(0,2));}
+      catch(e){fails.push("exception: "+e.message);}
+      sims++;
+    }
+    S=userS;upd();await new Promise(r=>setTimeout(r,16));
+  }
+  S=userS;
+  const stoppedBy=_stressStop?"toi":(fails.length>=60?"trop d'anomalies":"sécurité 15 min");
+  S._stress={running:false,sims,checks,reM,fails:fails.slice(0,14),failCount:fails.length,ok:fails.length===0,secs:Math.max(1,Math.round((Date.now()-t0)/1000)),teamCount,stoppedBy};
+  _stressRun=false;_stressStop=false;render();
 }
 /* --- Moteur de répartition optimale (priorités : format choisi > terrains/rotations > aucune équipe seule > éviter 6 > adapter 3/4/5) --- */
 function minSize(){return S.config.qualifPerPool+1;} // taille > nb de qualifiés
@@ -740,8 +945,25 @@ function pageConfig(){
   </div>
   ${courtsConfigCard()}
   ${diagnosticCard()}
+  ${stressCard()}
   <div class="card"><div class="spread"><div><h3 class="sec" style="margin:0">Pour démarrer</h3><p class="muted tiny" style="margin:4px 0 0">Saisis tes équipes, ou génère un tournoi de démo (${c.demoTeams} équipes) pour tout tester.</p></div>
     <div class="row"><button class="btn sea" onclick="generateDemo()">⚡ Démo</button><button class="btn primary" onclick="go('teams')">Ajouter les équipes →</button></div></div></div>`;
+}
+function stressCard(){
+  const d=S._stress;
+  let body="";
+  if(d&&d.running===false){
+    body=d.ok
+      ?`<div class="verdict ok"><div class="vh">✓ Aucune erreur détectée</div><div class="vb">Configuration <b>fiable</b> : <b>${d.sims.toLocaleString('fr')}</b> simulations complètes de tournoi et <b>${d.checks.toLocaleString('fr')}</b> vérifications de cohérence, avec <b>${d.teamCount} équipes</b> et tes réglages, en ${d.secs} s. Aucune équipe qualifiée à tort ou éliminée par erreur.</div></div>`
+      :`<div class="verdict bad"><div class="vh">⚠ ${d.failCount} erreur(s) détectée(s)</div><div class="vb">Sur ${d.sims.toLocaleString('fr')} simulations :<ul>${d.fails.map(f=>'<li>'+esc(f)+'</li>').join("")}</ul>Corrige la configuration ou signale-le moi.</div></div>`;
+  }
+  const running=d&&d.running;
+  return `<div class="card"><div class="spread"><div><h3 class="sec" style="margin:0">Vérification du tournoi (selon tes réglages)</h3>
+    <p class="muted tiny" style="margin:4px 0 0">Simule en continu des tournois complets avec ta configuration (équipes, poules, qualifiés, terrains, classement) et vérifie que toutes les règles restent cohérentes. Laisse tourner aussi longtemps que tu veux, puis arrête : plus c'est long, plus c'est sûr.</p></div>
+    ${running
+      ?`<button class="btn" onclick="stopConfigStress()">■ Arrêter</button>`
+      :`<button class="btn primary" onclick="runConfigStress()">▶ Lancer la vérification</button>`}</div>
+    <div id="stressLive" class="stress-live">${running?'<div class="stress-bar indet"><span></span></div><div class="stress-stat">Démarrage…</div>':''}</div>${body}</div>`;
 }
 function diagnosticCard(){
   const d=S._diag;
