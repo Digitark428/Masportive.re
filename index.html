@@ -905,6 +905,7 @@ function render(){
   const root=document.getElementById("root");
   const sp=parseHash();
   if(sp){renderSpectator(sp,root);return;}
+  stopLive(); // on n'est plus en vue spectateur : on arrête le rafraîchissement live
   if(bootErr){root.innerHTML=loadingScreen();return;}
   if(!authed){root.innerHTML=authScreen();return;}
   if(!currentId||!cur()){currentId=null;root.innerHTML=homeScreen();persist();return;}
@@ -923,6 +924,7 @@ function render(){
     </div></aside>
     <main><div class="wrap" id="view"></div></main></div>`;
   document.getElementById("view").innerHTML=({config:pageConfig,teams:pageTeams,draw:pageDraw,courts:pageCourts,pools:pagePools,split:pageSplit,hb:pageHB,finals:pageFinals,final:pageFinal,share:pageShare}[route])();
+  if(route==="share")genShare(); // affiche le QR du lien permanent dès l'ouverture
   persist();
 }
 function head(e,t,d){return `<div class="page-head"><div class="eyebrow">${e}</div><h2>${t}</h2>${d?`<p>${d}</p>`:""}</div>`;}
@@ -1442,6 +1444,7 @@ function decodeSnapshot(str){
 }
 function liveLink(id){return liveBase()+"#/live/"+encodeURIComponent(id);}
 function snapLink(t){return liveBase()+"#/v/"+encodeSnapshot(t);}
+function liveLink(t){return liveBase()+"#/live/"+encodeURIComponent(t.id);}
 function parseHash(){const h=location.hash||"";let m;
   if(m=h.match(/^#\/live\/(.+)$/))return{mode:"live",id:decodeURIComponent(m[1])};
   if(m=h.match(/^#\/v\/(.+)$/))return{mode:"snap",data:m[1]};
@@ -1511,42 +1514,100 @@ function explainBlock(pools,bracket,prefix,title,col){
 
 function pageShare(){
   const t=cur();if(!t)return head("Live","Partage","");
+  const live=liveLink(t);
   return head("Diffusion","Live & partage",`Donne aux joueurs un accès en lecture seule : classements, statuts, matchs à venir et tableaux finaux, depuis leur téléphone.`)+
   `<div class="card">
-     <h3 class="sec">Lien instantané pour les joueurs (recommandé)</h3>
-     <p class="muted tiny" style="margin:-6px 0 12px">Ce lien <b>embarque l'état actuel</b> du tournoi : il fonctionne sur n'importe quel téléphone, sans connexion partagée. C'est un <b>instantané</b> — régénère-le pour publier les derniers résultats.</p>
-     <div id="qrZone" class="qr-zone"><p class="muted tiny">Clique sur « Générer » pour créer le lien et le QR code.</p></div>
+     <h3 class="sec">Lien permanent (recommandé)</h3>
+     <p class="muted tiny" style="margin:-6px 0 12px">Ce QR code et ce lien <b>ne changent jamais</b> pour ce tournoi. Affiche-le une fois : les joueurs le scannent et voient les résultats <b>en direct</b>, mis à jour automatiquement à chaque fois que tu modifies les scores. Pas besoin de le régénérer.</p>
+     <div id="qrZone" class="qr-zone"><p class="muted tiny">Génération du QR code…</p></div>
      <div class="row" style="margin-top:14px">
-       <button class="btn primary" onclick="genShare()">🔄 Générer / mettre à jour</button>
        <button class="btn" onclick="copyShare()">⧉ Copier le lien</button>
        <button class="btn sea" onclick="openSpectator()">👁 Aperçu spectateur</button>
      </div>
-     <input type="text" id="shareUrl" readonly placeholder="Le lien apparaîtra ici…" style="margin-top:12px;font-size:12px">
-     <div class="note" style="margin-top:14px"><b>Mode d'emploi :</b> affiche le QR sur un écran (ou imprime-le) ; les joueurs le scannent et voient le tournoi. Comme c'est un instantané, regénère le QR après chaque vague de résultats.</div>
+     <input type="text" id="shareUrl" readonly value="${esc(live)}" style="margin-top:12px;font-size:12px">
+     <div class="note" style="margin-top:14px"><b>Mode d'emploi :</b> affiche ou imprime ce QR une seule fois (sur un panneau, un écran…). Tant que ce tournoi existe, le même QR montre toujours les derniers résultats. <br><span class="muted tiny">Le live se rafraîchit tout seul côté joueur, et il nécessite une connexion Internet.</span></div>
    </div>
-   <div class="card"><h3 class="sec">Aperçu local (même appareil)</h3>
-     <p class="muted tiny" style="margin:-6px 0 10px">Ouvre la vue spectateur de ce tournoi dans ce navigateur (pour la projeter sur un écran branché ici).</p>
-     <button class="btn" onclick="openSpectator()">Ouvrir la vue spectateur →</button></div>`;
+   <div class="card">
+     <details class="cloud-sql"><summary>Lien instantané hors-ligne (optionnel)</summary>
+     <p class="muted tiny" style="margin:10px 0 12px">Variante qui <b>embarque les résultats dans le lien lui-même</b> : utile si les joueurs n'ont pas de réseau. En contrepartie, c'est un <b>instantané figé</b> qu'il faut régénérer après chaque vague de résultats.</p>
+     <div id="snapZone" class="qr-zone"><p class="muted tiny">Clique sur « Générer l'instantané ».</p></div>
+     <div class="row" style="margin-top:14px">
+       <button class="btn" onclick="genSnap()">🔄 Générer l'instantané</button>
+       <button class="btn" onclick="copySnap()">⧉ Copier ce lien</button>
+     </div>
+     <input type="text" id="snapUrl" readonly placeholder="Le lien instantané apparaîtra ici…" style="margin-top:12px;font-size:12px">
+     </details>
+   </div>`;
 }
+// QR du lien PERMANENT (basé sur l'id du tournoi — ne change jamais)
 function genShare(){
-  const t=cur();if(!t)return;let url;try{url=snapLink(t);}catch(e){toast("Erreur");return;}
-  document.getElementById("shareUrl").value=url;
-  const zone=document.getElementById("qrZone");
+  const t=cur();if(!t)return;
+  const url=liveLink(t);
+  const inp=document.getElementById("shareUrl"); if(inp)inp.value=url;
+  const zone=document.getElementById("qrZone"); if(!zone)return;
   try{const q=qrcode(0,"M");q.addData(url);q.make();
-    zone.innerHTML=`<div class="qr-box">${q.createSvgTag({cellSize:4,margin:2,scalable:true})}</div><div class="muted tiny" style="text-align:center;margin-top:8px">${q.getModuleCount()}×${q.getModuleCount()} modules — scanne avec l'appareil photo</div>`;
-  }catch(e){zone.innerHTML=`<div class="note" style="background:#FAE9DF;border-color:#E8C3B0;color:#8a3d22;margin:0">Tournoi trop volumineux pour un QR lisible — utilise le <b>lien</b> ci-dessous (copie / envoi par message).</div>`;}
-  toast("Lien & QR générés");
+    zone.innerHTML=`<div class="qr-box">${q.createSvgTag({cellSize:5,margin:2,scalable:true})}</div><div class="muted tiny" style="text-align:center;margin-top:8px">Scanne avec l'appareil photo — lien permanent</div>`;
+  }catch(e){zone.innerHTML=`<div class="note" style="margin:0">Impossible de générer le QR. Utilise le lien ci-dessous.</div>`;}
 }
-function copyShare(){const el=document.getElementById("shareUrl");if(!el.value)genShare();el.select();try{navigator.clipboard.writeText(el.value);}catch(e){try{document.execCommand("copy");}catch(_){}}toast("Lien copié");}
+function copyShare(){const el=document.getElementById("shareUrl");if(!el)return;el.select();try{navigator.clipboard.writeText(el.value);}catch(e){try{document.execCommand("copy");}catch(_){}}toast("Lien permanent copié");}
+// Lien instantané hors-ligne (embarque les données — change à chaque génération)
+function genSnap(){
+  const t=cur();if(!t)return;let url;try{url=snapLink(t);}catch(e){toast("Erreur");return;}
+  const inp=document.getElementById("snapUrl"); if(inp)inp.value=url;
+  const zone=document.getElementById("snapZone"); if(!zone)return;
+  try{const q=qrcode(0,"M");q.addData(url);q.make();
+    zone.innerHTML=`<div class="qr-box">${q.createSvgTag({cellSize:4,margin:2,scalable:true})}</div><div class="muted tiny" style="text-align:center;margin-top:8px">${q.getModuleCount()}×${q.getModuleCount()} modules — instantané figé</div>`;
+  }catch(e){zone.innerHTML=`<div class="note" style="background:#FAE9DF;border-color:#E8C3B0;color:#8a3d22;margin:0">Tournoi trop volumineux pour un QR instantané — utilise plutôt le <b>lien permanent</b> ci-dessus.</div>`;}
+  toast("Instantané généré");
+}
+function copySnap(){const el=document.getElementById("snapUrl");if(!el)return;if(!el.value)genSnap();el.select();try{navigator.clipboard.writeText(el.value);}catch(e){try{document.execCommand("copy");}catch(_){}}toast("Lien instantané copié");}
 function openSpectator(){const t=cur();if(!t)return;location.hash="#/live/"+encodeURIComponent(t.id);}
 
 let specTab="classements", specQuery="";
+let _specTimer=null, _specSig=null, _specId=null;
+
+function specError(msg){return `<div class="spec"><div class="spec-head"><div class="brand"><div class="ball"></div><div><h1>Cap Homard — Live</h1></div></div></div><div class="spec-body"><div class="card"><div class="empty"><div class="big">📡</div><h4>Indisponible</h4><p class="muted">${esc(msg)}</p><a class="btn" style="margin-top:14px" href="${liveBase()}">← Accueil</a></div></div></div></div>`;}
+function specLoading(){return `<div class="spec"><div class="spec-head"><div class="brand"><div class="ball"></div><div><h1>Cap Homard — Live</h1></div></div></div><div class="spec-body"><div class="card"><div class="empty"><div class="big">📡</div><h4>Chargement du tournoi…</h4><p class="muted">Récupération des résultats en direct.</p></div></div></div></div>`;}
+
 function renderSpectator(sp,root){
-  let t=null,err=null;
-  try{ if(sp.mode==="live"){t=DB.tournaments.find(x=>x.id===sp.id);if(!t)err="Ce tournoi n'est pas enregistré sur cet appareil. Demandez à l'organisateur le lien/QR instantané.";}
-       else {t=decodeSnapshot(sp.data);} }
-  catch(e){err="Lien invalide ou illisible.";}
-  if(err){root.innerHTML=`<div class="spec"><div class="spec-head"><div class="brand"><div class="ball"></div><div><h1>Cap Homard — Live</h1></div></div></div><div class="spec-body"><div class="card"><div class="empty"><div class="big">📡</div><h4>Indisponible</h4><p class="muted">${err}</p><a class="btn" style="margin-top:14px" href="${liveBase()}">← Accueil</a></div></div></div></div>`;return;}
+  // Mode "instantané" (#/v/…) : tout est embarqué dans le lien, aucun réseau requis.
+  if(sp.mode==="snap"){
+    stopLive();
+    let t=null,err=null;
+    try{ t=decodeSnapshot(sp.data); }catch(e){ err="Lien invalide ou illisible."; }
+    if(err){root.innerHTML=specError(err);return;}
+    S=t.state;ensureCourts();window._specT=t;root.innerHTML=spectatorView(t);return;
+  }
+  // Mode "live" stable (#/live/<id>) : le lien ne change jamais, le contenu est lu depuis Supabase.
+  const id=sp.id; _specId=id;
+  const local=DB.tournaments.find(x=>x.id===id);
+  if(local){ S=local.state;ensureCourts();window._specT=local;_specSig=JSON.stringify(local.state);root.innerHTML=spectatorView(local); }
+  else { root.innerHTML=specLoading(); _specSig=null; }
+  refreshLive(id,true);
+  clearInterval(_specTimer);
+  _specTimer=setInterval(()=>refreshLive(id,false),15000); // rafraîchissement automatique du live
+}
+function stopLive(){ if(_specTimer){clearInterval(_specTimer);_specTimer=null;} _specId=null; }
+async function refreshLive(id,firstLoad){
+  // Attend que le client Supabase soit prêt (au cas où le spectateur ouvre le lien à froid).
+  for(let i=0;i<30 && !sb;i++){ await new Promise(r=>setTimeout(r,200)); }
+  let t=null;
+  if(sb){
+    try{
+      const {data,error}=await sb.from("tournaments").select("data").eq("id",id).maybeSingle();
+      if(error){ console.error("[live] erreur chargement :",error.message); }
+      else if(data && data.data){ t=data.data; }
+    }catch(e){ console.error("[live] exception :",e&&e.message); }
+  }
+  if(!t) t=DB.tournaments.find(x=>x.id===id)||null; // repli local si réseau indisponible
+  // L'utilisateur a pu quitter la vue live entre-temps : on ne touche plus au DOM.
+  const sp=parseHash();
+  if(!sp || sp.mode!=="live" || sp.id!==id){ stopLive(); return; }
+  const root=document.getElementById("root");
+  if(!t){ if(firstLoad) root.innerHTML=specError("Ce tournoi est introuvable. Vérifie le lien, ou l'organisateur ne l'a pas encore enregistré dans le cloud."); return; }
+  const sig=JSON.stringify(t.state);
+  if(sig===_specSig && !firstLoad) return; // rien de neuf → on évite de re-render (préserve le scroll)
+  _specSig=sig;
   S=t.state;ensureCourts();window._specT=t;
   root.innerHTML=spectatorView(t);
 }
