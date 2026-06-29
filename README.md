@@ -70,3 +70,17 @@ L'app écrit des journaux dans la **console du navigateur** (**F12** → onglet 
 - `[cloud] ✅ upsert OK` : un tournoi a bien été enregistré dans Supabase.
 - `[cloud] ❌ ERREUR upsert / delete : …` : affiche le message exact renvoyé par Supabase
   (message, details, hint, code) — utile si une colonne ou une policy ne correspond pas.
+
+## Option : saisie des scores par les joueurs
+Tu peux laisser les joueurs saisir eux-mêmes leurs scores depuis le live (le tournoi se remplit tout seul).
+
+**Activation (une fois) :** dans Supabase → SQL Editor, exécute le fichier `supabase_add_player_entry.sql`.
+> ✅ Sans risque : il ajoute juste une table `score_submissions`, il ne touche pas à tes tournois. (Inutile de ré-exécuter `supabase_setup.sql`, qui lui recrée la table des tournois.)
+
+**Utilisation :**
+1. Ouvre un tournoi → onglet **Live & partage** → active **« Saisie des scores par les joueurs »** (désactivé par défaut).
+2. Les joueurs scannent le QR permanent, vont dans l'onglet **« Mon équipe »**, cherchent leur équipe et saisissent leurs scores.
+3. Un message leur rappelle de remplir **avec l'équipe adverse, ensemble**.
+4. Les scores arrivent **en direct** dans ton tournoi. Tu gardes toujours la main pour corriger via les pages d'admin habituelles.
+
+> Désactivée, l'app fonctionne exactement comme avant (toi seul saisis les scores).

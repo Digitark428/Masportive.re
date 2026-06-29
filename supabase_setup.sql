@@ -35,3 +35,30 @@ create policy "acces_global" on public.tournaments
   to public          -- couvre les rôles anon et authenticated
   using (true)
   with check (true);
+
+
+-- ============================================================
+--  Table « score_submissions » — saisie des scores par les joueurs (optionnel)
+--  File d'attente append-only : les joueurs y déposent leurs scores depuis le live,
+--  l'app organisateur les applique au tournoi puis les supprime.
+--  (Si tu n'utilises pas cette fonction, la table reste simplement vide.)
+-- ============================================================
+create table if not exists public.score_submissions (
+  id             bigint generated always as identity primary key,
+  tournament_id  text not null,                       -- id du tournoi concerné
+  slot           text not null,                       -- identifiant du match (poule/finale)
+  score_a        int  not null,
+  score_b        int  not null,
+  created_at     timestamptz not null default now()
+);
+
+create index if not exists score_submissions_tid_idx on public.score_submissions (tournament_id, created_at);
+
+alter table public.score_submissions enable row level security;
+
+drop policy if exists "submissions_global" on public.score_submissions;
+create policy "submissions_global" on public.score_submissions
+  for all
+  to public
+  using (true)
+  with check (true);

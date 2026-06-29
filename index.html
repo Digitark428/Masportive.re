@@ -369,6 +369,20 @@ input:focus,select:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(24,24
 /* cloud */
 .cloud-badge{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;background:#fff;border:1px solid var(--line);padding:5px 11px;border-radius:999px;white-space:nowrap}
 .cloud-badge .cb-dot{width:8px;height:8px;border-radius:50%}
+/* saisie joueurs */
+.pe-toggle-card{border-color:#D9E2F2;background:linear-gradient(180deg,#FAFBFE,#fff)}
+.pe-card{border-color:var(--sea);box-shadow:0 1px 3px rgba(30,64,175,.08)}
+.pe-warn{background:#FBF6E6;border:1px solid var(--gold);color:#7a5c0a;border-radius:12px;padding:10px 13px;font-size:13px;line-height:1.4;margin-bottom:12px}
+.pe-match{border-top:1px solid var(--line);padding:11px 0}
+.pe-match:first-of-type{border-top:none}
+.pe-phase{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-soft);margin-bottom:7px}
+.pe-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pe-line input[type=number]{width:58px;text-align:center;padding:9px 6px;font-weight:700;font-size:16px;flex:none}
+.pe-tm{flex:1;min-width:90px;font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pe-tm.right{text-align:right}
+.pe-vs{color:var(--ink-soft);font-weight:700}
+.pe-done{font-size:12px;font-weight:700;color:var(--ok);white-space:nowrap}
+@media(max-width:560px){.pe-tm{min-width:70px;font-size:12.5px}.pe-line input[type=number]{width:50px;font-size:15px}}
 .user-pill{display:inline-flex;align-items:center;font-size:12px;font-weight:600;color:var(--ink-soft);background:var(--sand-2);border:1px solid var(--line);padding:5px 11px;border-radius:999px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cloud-badge.saving .cb-dot,.cloud-badge.connecting .cb-dot{animation:vp-pulse 1.4s infinite}
 .cloud-card{border-color:#D9E2F2;background:linear-gradient(180deg,#FAFBFE,#fff)}
@@ -393,7 +407,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 "use strict";
 /* ===================== ÉTAT ===================== */
 const DEFAULT=()=>({
-  config:{name:"Tournoi Cap Homard",poolSizeTarget:5,qualifPerPool:3,points:21,rankMode:"wins",courts:5,courtNames:["Terrain 1","Terrain 2","Terrain 3","Terrain 4","Terrain 5"],centralIndex:-1,demoTeams:40},
+  config:{name:"Tournoi Cap Homard",poolSizeTarget:5,qualifPerPool:3,points:21,rankMode:"wins",courts:5,courtNames:["Terrain 1","Terrain 2","Terrain 3","Terrain 4","Terrain 5"],centralIndex:-1,demoTeams:40,playerEntry:false},
   teams:[], qualif:{pools:null}, haute:{pools:null}, basse:{pools:null}, finals:{haute:null,basse:null}
 });
 let DB={tournaments:[]};
@@ -443,6 +457,7 @@ async function boot(){
     cloudReady=true;
     console.log("[cloud] client prêt (connexion globale, sans Supabase Auth).");
     if(authed) await cloudLoad();
+    if(authed && cloudReady) startConsolidation();
   }catch(e){
     // Pas de blocage : on bascule en mode local et l'app fonctionne quand même.
     cloudReady=false;
@@ -469,12 +484,13 @@ async function authSubmit(){
   if(id!==APP_ID||pass!==APP_PW){ authErr="Identifiant ou mot de passe incorrect."; render(); return; }
   authed=true; try{localStorage.setItem(AUTH_KEY,"1");}catch(e){}
   currentId=null;
-  if(cloudReady){ await cloudLoad(); }
+  if(cloudReady){ await cloudLoad(); startConsolidation(); }
   else { const cache=loadLocalCache(); DB=cache&&cache.tournaments?cache:{tournaments:[]}; syncSet("offline"); }
   render();
 }
 function logout(){
   authed=false; try{localStorage.removeItem(AUTH_KEY);}catch(e){}
+  clearInterval(_consolidateTimer);
   currentId=null; DB={tournaments:[]}; _cloudSig={}; render();
 }
 
@@ -1226,6 +1242,7 @@ function poolCard(phase,idx,L,sea){
    <div class="pool-body">${rows}<div style="height:4px"></div>${tbl}</div></div>`;
 }
 function phaseStore(phase){return phase==="qualif"?S.qualif:phase==="haute"?S.haute:S.basse;}
+function togglePlayerEntry(on){ S.config.playerEntry=!!on; persist(); render(); toast(on?"Saisie joueurs activée":"Saisie joueurs désactivée"); }
 function setScore(phase,idx,mi,side,val){
   const pool=phaseStore(phase).pools[idx];
   pool.scores[mi][side]=val===""?"":(+val);
@@ -1515,7 +1532,23 @@ function explainBlock(pools,bracket,prefix,title,col){
 function pageShare(){
   const t=cur();if(!t)return head("Live","Partage","");
   const live=liveLink(t);
+  const pe=playerEntryOn(S);
   return head("Diffusion","Live & partage",`Donne aux joueurs un accès en lecture seule : classements, statuts, matchs à venir et tableaux finaux, depuis leur téléphone.`)+
+  `<div class="card pe-toggle-card">
+     <div class="spread">
+       <div>
+         <h3 class="sec" style="margin:0 0 4px">Saisie des scores par les joueurs</h3>
+         <p class="muted tiny" style="margin:0;max-width:62ch">Si activé, chaque joueur retrouve ses matchs dans l'onglet « Mon équipe » du live et saisit ses scores lui-même : le tournoi se remplit tout seul. Tu gardes la main pour corriger n'importe quel score.</p>
+       </div>
+       <label class="switch" style="flex:none">
+         <input type="checkbox" ${pe?"checked":""} onchange="togglePlayerEntry(this.checked)">
+         <span class="tg"></span>
+         <span style="font-size:12.5px">${pe?"Activée":"Désactivée"}</span>
+       </label>
+     </div>
+     ${pe?`<div class="pe-warn" style="margin-top:12px">Mode joueur <b>activé</b> : rappelle aux équipes de saisir leur score <b>ensemble avec l'adversaire</b>. Les scores arrivent en direct dans ton tournoi.</div>`:""}
+   </div>
+  `+
   `<div class="card">
      <h3 class="sec">Lien permanent (recommandé)</h3>
      <p class="muted tiny" style="margin:-6px 0 12px">Ce QR code et ce lien <b>ne changent jamais</b> pour ce tournoi. Affiche-le une fois : les joueurs le scannent et voient les résultats <b>en direct</b>, mis à jour automatiquement à chaque fois que tu modifies les scores. Pas besoin de le régénérer.</p>
@@ -1566,20 +1599,173 @@ function openSpectator(){const t=cur();if(!t)return;location.hash="#/live/"+enco
 let specTab="classements", specQuery="";
 let _specTimer=null, _specSig=null, _specId=null;
 
+/* ===================== SAISIE DES SCORES PAR LES JOUEURS (optionnel) =====================
+   - Activé par l'organisateur via S.config.playerEntry (désactivé par défaut → mode classique).
+   - Les joueurs saisissent depuis la vue live ; chaque saisie est INSÉRÉE dans la table
+     'score_submissions' (file append-only → aucune écriture concurrente sur le tournoi).
+   - La vue live superpose ces soumissions à l'affichage (résultat visible immédiatement).
+   - L'app organisateur consolide ces soumissions dans le tournoi puis les purge.            */
+
+function slotSafe(slot){return String(slot).replace(/\|/g,"_");}
+function playerEntryOn(state){return !!(state&&state.config&&state.config.playerEntry);}
+
+// Applique un score (identifié par "slot") directement dans un state de tournoi. Sans effet de bord destructeur.
+function applyScoreSlot(state,slot,a,b){
+  if(!state)return false;
+  const p=String(slot).split("|");
+  if(p[0]==="qualif"||p[0]==="haute"||p[0]==="basse"){
+    const store=p[0]==="qualif"?state.qualif:p[0]==="haute"?state.haute:state.basse;
+    if(!store||!store.pools)return false;
+    const pool=store.pools[+p[1]]; if(!pool||!pool.scores||!pool.scores[+p[2]])return false;
+    pool.scores[+p[2]]=[a,b]; return true;
+  }
+  if(p[0]==="fh"||p[0]==="fb"){
+    const br=p[0]==="fh"?(state.finals&&state.finals.haute):(state.finals&&state.finals.basse);
+    if(!br)return false;
+    if(p[1]==="p"){ if(br.extra&&br.extra.petite&&br.extra.petite.a&&br.extra.petite.b){br.extra.petite.sa=a;br.extra.petite.sb=b;return true;} return false; }
+    const round=br.rounds&&br.rounds[+p[1]]; if(!round||!round[+p[2]])return false;
+    const m=round[+p[2]]; if(!m.a||!m.b)return false;
+    m.sa=a; m.sb=b; try{advance(br);}catch(e){} return true;
+  }
+  return false;
+}
+
+// Liste les matchs d'une équipe (poules + finales), avec leur slot et leur score actuel.
+function playerMatches(state,teamId){
+  const out=[];
+  const addPool=(key,label,store)=>{
+    if(!store||!store.pools)return;
+    store.pools.forEach((pool,pi)=>{
+      if(!pool.teams||pool.teams.indexOf(teamId)<0)return;
+      pool.matches.forEach((m,mi)=>{
+        const a=pool.teams[m.i],b=pool.teams[m.j];
+        if(a!==teamId&&b!==teamId)return;
+        const s=pool.scores[mi]||["",""];
+        out.push({slot:`${key}|${pi}|${mi}`,phase:label,aId:a,bId:b,sa:s[0],sb:s[1],
+          played:s[0]!==""&&s[1]!==""&&s[0]!=null&&s[1]!=null});
+      });
+    });
+  };
+  addPool("qualif","Poule de qualification",state.qualif);
+  addPool("haute","Poule — Tableau Haut",state.haute);
+  addPool("basse","Poule — Consolante",state.basse);
+  const addBr=(key,label,br)=>{
+    if(!br||!br.rounds)return;
+    try{advance(br);}catch(e){}
+    br.rounds.forEach((round,ri)=>round.forEach((m,mi)=>{
+      if(!m.a||!m.b)return;
+      if(m.a.id!==teamId&&m.b.id!==teamId)return;
+      out.push({slot:`${key}|${ri}|${mi}`,phase:label+" · "+roundName(br.rounds.length-ri),aId:m.a.id,bId:m.b.id,
+        sa:m.sa,sb:m.sb,played:m.sa!==""&&m.sb!==""});
+    }));
+    const pm=br.extra&&br.extra.petite;
+    if(pm&&pm.a&&pm.b&&(pm.a.id===teamId||pm.b.id===teamId))
+      out.push({slot:`${key}|p|0`,phase:label+" · Petite finale (3e place)",aId:pm.a.id,bId:pm.b.id,sa:pm.sa,sb:pm.sb,
+        played:pm.sa!==""&&pm.sb!==""});
+  };
+  addBr("fh","Tableau principal",state.finals&&state.finals.haute);
+  addBr("fb","Consolante",state.finals&&state.finals.basse);
+  return out;
+}
+
+// Bloc HTML de saisie pour une équipe (affiché dans l'onglet « Mon équipe » de la vue live).
+function playerEntryBlock(teamId){
+  if(!playerEntryOn(S)||window._specMode!=="live"||!sb)return "";
+  const ms=playerMatches(S,teamId);
+  if(!ms.length)return "";
+  const rows=ms.map(m=>{
+    const sid=slotSafe(m.slot);
+    const done=m.played?`<span class="pe-done">✓ ${esc(m.sa)}–${esc(m.sb)}</span>`:"";
+    return `<div class="pe-match">
+      <div class="pe-phase">${esc(m.phase)}</div>
+      <div class="pe-line">
+        <span class="pe-tm">${esc(teamName(m.aId))}</span>
+        <input type="number" min="0" inputmode="numeric" id="se_a_${sid}" value="${m.sa===""||m.sa==null?"":esc(m.sa)}" placeholder="0">
+        <span class="pe-vs">—</span>
+        <input type="number" min="0" inputmode="numeric" id="se_b_${sid}" value="${m.sb===""||m.sb==null?"":esc(m.sb)}" placeholder="0">
+        <span class="pe-tm right">${esc(teamName(m.bId))}</span>
+        <button class="btn primary sm" onclick="submitScore('${m.slot}')">${m.played?"Corriger":"Valider"}</button>
+        ${done}
+      </div>
+    </div>`;
+  }).join("");
+  return `<div class="card pe-card">
+    <h3 class="sec" style="margin-bottom:8px">Saisir mes scores</h3>
+    <div class="pe-warn">⚠️ Remplis ton score <b>avec l'équipe adverse, ensemble</b>, pour être sûr. Le score apparaît aussitôt dans le tournoi.</div>
+    ${rows}
+  </div>`;
+}
+
+async function submitScore(slot){
+  if(!sb){toast("Hors-ligne — réessaie avec du réseau");return;}
+  const sid=slotSafe(slot);
+  const ea=document.getElementById("se_a_"+sid),eb=document.getElementById("se_b_"+sid);
+  if(!ea||!eb)return;
+  const a=ea.value,b=eb.value;
+  if(a===""||b===""){toast("Entre les deux scores");return;}
+  const tid=window._specTid;if(!tid)return;
+  try{
+    const {error}=await sb.from("score_submissions").insert({tournament_id:tid,slot,score_a:+a,score_b:+b});
+    if(error)throw error;
+    applyScoreSlot(S,slot,+a,+b); // reflet immédiat à l'écran
+    _specSig=JSON.stringify(S);
+    document.getElementById("root").innerHTML=spectatorView(window._specT||{name:"",state:S});
+    toast("Score envoyé ✅");
+  }catch(e){ console.error("[live] envoi score :",e&&e.message); toast("Erreur — réessaie"); }
+}
+
+// Lit les soumissions d'un tournoi et les applique à un state (ordre chronologique → la dernière gagne).
+async function overlaySubmissions(state,tid){
+  if(!sb||!tid)return;
+  try{
+    const {data,error}=await sb.from("score_submissions").select("slot,score_a,score_b,created_at").eq("tournament_id",tid).order("created_at",{ascending:true});
+    if(error){console.error("[live] lecture soumissions :",error.message);return;}
+    (data||[]).forEach(s=>applyScoreSlot(state,s.slot,s.score_a,s.score_b));
+  }catch(e){ console.error("[live] overlay :",e&&e.message); }
+}
+
+// CÔTÉ ORGANISATEUR : consolide les soumissions des joueurs dans les tournois, puis les purge.
+let _consolidateTimer=null;
+function startConsolidation(){ clearInterval(_consolidateTimer); _consolidateTimer=setInterval(consolidateLoop,8000); consolidateLoop(); }
+async function consolidateLoop(){
+  if(!sb||!cloudReady||!authed||!DB.tournaments.length)return;
+  try{
+    const ids=DB.tournaments.map(t=>t.id);
+    const {data:subs,error}=await sb.from("score_submissions").select("id,tournament_id,slot,score_a,score_b").in("tournament_id",ids);
+    if(error){console.error("[live] lecture soumissions (orga) :",error.message);return;}
+    if(!subs||!subs.length)return;
+    const purge=[],touched=new Set();
+    subs.forEach(s=>{
+      const t=DB.tournaments.find(x=>x.id===s.tournament_id); if(!t)return;
+      const ok=applyScoreSlot(t.state,s.slot,s.score_a,s.score_b);
+      if(ok)touched.add(t.id);
+      purge.push(s.id); // on purge dans tous les cas (slot appliqué ou devenu obsolète)
+    });
+    if(touched.size){
+      touched.forEach(id=>{const t=DB.tournaments.find(x=>x.id===id);if(t)t.updatedAt=Date.now();});
+      cacheLocal(); await cloudFlush();
+      console.log("[live] ✅",touched.size,"tournoi(s) mis à jour depuis les scores joueurs.");
+      // Re-render seulement sur la liste des tournois (aucun champ de saisie → pas de gêne pour l'orga).
+      if(!parseHash()&&!currentId)render();
+    }
+    if(purge.length){ const {error:de}=await sb.from("score_submissions").delete().in("id",purge); if(de)console.error("[live] purge :",de.message); }
+  }catch(e){ console.error("[live] consolidation :",e&&e.message); }
+}
+
 function specError(msg){return `<div class="spec"><div class="spec-head"><div class="brand"><div class="ball"></div><div><h1>Cap Homard — Live</h1></div></div></div><div class="spec-body"><div class="card"><div class="empty"><div class="big">📡</div><h4>Indisponible</h4><p class="muted">${esc(msg)}</p><a class="btn" style="margin-top:14px" href="${liveBase()}">← Accueil</a></div></div></div></div>`;}
 function specLoading(){return `<div class="spec"><div class="spec-head"><div class="brand"><div class="ball"></div><div><h1>Cap Homard — Live</h1></div></div></div><div class="spec-body"><div class="card"><div class="empty"><div class="big">📡</div><h4>Chargement du tournoi…</h4><p class="muted">Récupération des résultats en direct.</p></div></div></div></div>`;}
 
 function renderSpectator(sp,root){
   // Mode "instantané" (#/v/…) : tout est embarqué dans le lien, aucun réseau requis.
   if(sp.mode==="snap"){
-    stopLive();
+    stopLive(); window._specMode="snap"; window._specTid=null;
     let t=null,err=null;
     try{ t=decodeSnapshot(sp.data); }catch(e){ err="Lien invalide ou illisible."; }
     if(err){root.innerHTML=specError(err);return;}
     S=t.state;ensureCourts();window._specT=t;root.innerHTML=spectatorView(t);return;
   }
   // Mode "live" stable (#/live/<id>) : le lien ne change jamais, le contenu est lu depuis Supabase.
-  const id=sp.id; _specId=id;
+  const id=sp.id; _specId=id; window._specMode="live"; window._specTid=id;
   const local=DB.tournaments.find(x=>x.id===id);
   if(local){ S=local.state;ensureCourts();window._specT=local;_specSig=JSON.stringify(local.state);root.innerHTML=spectatorView(local); }
   else { root.innerHTML=specLoading(); _specSig=null; }
@@ -1600,6 +1786,8 @@ async function refreshLive(id,firstLoad){
     }catch(e){ console.error("[live] exception :",e&&e.message); }
   }
   if(!t) t=DB.tournaments.find(x=>x.id===id)||null; // repli local si réseau indisponible
+  // Superpose les scores saisis par les joueurs (file de soumissions) sur l'affichage.
+  if(t&&t.state) await overlaySubmissions(t.state,id);
   // L'utilisateur a pu quitter la vue live entre-temps : on ne touche plus au DOM.
   const sp=parseHash();
   if(!sp || sp.mode!=="live" || sp.id!==id){ stopLive(); return; }
@@ -1686,7 +1874,7 @@ function teamCard(id){
   const j=teamJourney(id);
   const steps=j.steps.map(s=>{const x=s.stat;
     return `<div class="jstep"><div class="jstep-h"><b>${esc(s.phase)}</b> ${s.repeche?'<span class="st-badge repe" style="font-size:9px">repêché</span>':''}<span class="court">${esc(s.pool)} · ${s.pos}${s.pos===1?'er':'e'}</span></div>${x?`<div class="jstat">${x.w}V · ${x.l}D · ${x.pf}-${x.pc} (diff ${x.diff>=0?'+':''}${x.diff}) · coeff ${fmtCoeff(x.coeff)}</div>`:""}</div>`;}).join("");
-  return `<div class="card team-card"><div class="tc-head"><div class="tc-name">${esc(teamName(id))}</div>${statusBadge(j.status)}</div>${steps||'<p class="muted tiny">Pas encore de match joué.</p>'}</div>`;
+  return `<div class="card team-card"><div class="tc-head"><div class="tc-name">${esc(teamName(id))}</div>${statusBadge(j.status)}</div>${steps||'<p class="muted tiny">Pas encore de match joué.</p>'}</div>`+playerEntryBlock(id);
 }
 
 boot();
