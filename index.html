@@ -399,16 +399,21 @@ const DEFAULT=()=>({
 let DB={tournaments:[]};
 let currentId=null, route="config", finalTab="haute", editId=null;
 let S=DEFAULT(); // référence vivante vers le tournoi ouvert
-function loadDB(){try{const r=localStorage.getItem("capHomardDB");return r?JSON.parse(r):null;}catch(e){return null;}}
-function migrate(){ // récupère un éventuel ancien tournoi unique
-  try{const r=localStorage.getItem("capHomard");if(r){const st=JSON.parse(r);return {tournaments:[{id:uid(),name:(st.config&&st.config.name)||"Tournoi",date:"",location:"",createdAt:Date.now(),updatedAt:Date.now(),state:st}]};}}catch(e){}
-  return null;
-}
+const LOCAL_KEY="capHomardDB"; // cache local unique (connexion globale, pas de multi-utilisateurs)
 function cur(){return DB.tournaments.find(t=>t.id===currentId);}
-function persist(){try{if(currentId){const t=cur();if(t)t.updatedAt=Date.now();}if(user)localStorage.setItem(userKey(),JSON.stringify(DB));}catch(e){}scheduleCloudSync();}
+function cacheLocal(){try{localStorage.setItem(LOCAL_KEY,JSON.stringify(DB));}catch(e){}}
+function loadLocalCache(){try{const r=localStorage.getItem(LOCAL_KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
+function persist(){try{if(currentId){const t=cur();if(t)t.updatedAt=Date.now();}cacheLocal();}catch(e){}scheduleCloudSync();}
 const save=persist; // les fonctions du moteur appellent save()
-/* ===================== SAAS : AUTH + SYNCHRO SUPABASE ===================== */
-let sb=null, user=null, bootErr=null, syncState="idle", authMode="in", authErr="", _cloudTimer=null, _cloudSig={}, _cloudLib=null, _lastUid=null;
+/* ===================== CONNEXION GLOBALE + SYNCHRO SUPABASE =====================
+   Architecture volontairement simple :
+   - une seule connexion globale (identifiant/mot de passe en dur, pas de multi-utilisateurs)
+   - aucune gestion Supabase Auth, aucun compte e-mail
+   - une seule table partagée 'tournaments' (colonnes : id, created_at, updated_at, name, event_date, data)
+   - sauvegarde automatique et transparente (création/modif = upsert immédiat, suppression = delete)        */
+const APP_ID="volleypei", APP_PW="volleypei974", AUTH_KEY="capHomardAuth";
+let sb=null, authed=false, cloudReady=false, bootErr=null, authErr="", syncState="idle", _cloudTimer=null, _cloudSig={}, _cloudLib=null;
+
 function loadSupabaseLib(){
   if(typeof supabase!=="undefined")return Promise.resolve();
   if(_cloudLib)return _cloudLib;
@@ -422,95 +427,119 @@ function loadSupabaseLib(){
   });
   return _cloudLib;
 }
+
+/* Démarrage : prépare le client Supabase, puis restaure la session locale s'il y en a une.
+   Si le cloud est indisponible (hors-ligne, config manquante…), l'app reste utilisable en local. */
 async function boot(){
+  authed = (()=>{try{return localStorage.getItem(AUTH_KEY)==="1";}catch(e){return false;}})();
   try{
     let cfg;
     try{ cfg=await fetch("/api/config",{cache:"no-store"}).then(r=>r.json()); }
-    catch(e){ throw new Error("Configuration introuvable (/api/config). Le projet doit être déployé sur Vercel avec le dossier api/."); }
-    if(!cfg||!cfg.url||!cfg.anonKey) throw new Error("Variables Supabase manquantes dans Vercel (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY).");
+    catch(e){ throw new Error("config_unreachable"); }
+    if(!cfg||!cfg.url||!cfg.anonKey) throw new Error("config_missing");
+    console.log("[cloud] config chargée, URL :",cfg.url,"| clé :",(cfg.anonKey||"").slice(0,12)+"…");
     await loadSupabaseLib();
-    sb=supabase.createClient(cfg.url,cfg.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-    sb.auth.onAuthStateChange((_e,session)=>{ onSession(session); });
-    const {data}=await sb.auth.getSession();
-    await onSession(data?data.session:null);
-  }catch(e){ bootErr=e.message||"Erreur d'initialisation"; render(); }
-}
-async function onSession(session){
-  const u=session?session.user:null;
-  const changed=(u?u.id:null)!==_lastUid;
-  user=u; _lastUid=u?u.id:null;
-  if(user){ if(changed){ await cloudLoad(); } }
-  else { DB={tournaments:[]}; currentId=null; _cloudSig={}; }
+    sb=supabase.createClient(cfg.url,cfg.anonKey,{auth:{persistSession:false,autoRefreshToken:false}});
+    cloudReady=true;
+    console.log("[cloud] client prêt (connexion globale, sans Supabase Auth).");
+    if(authed) await cloudLoad();
+  }catch(e){
+    // Pas de blocage : on bascule en mode local et l'app fonctionne quand même.
+    cloudReady=false;
+    console.warn("[cloud] indisponible → mode local seul :",e&&e.message);
+    if(authed){ const cache=loadLocalCache(); DB=cache&&cache.tournaments?cache:{tournaments:[]}; syncSet("offline"); }
+  }
   render();
 }
-function userKey(){return "capDB_"+(user?user.id:"anon");}
-function cacheLocal(){try{localStorage.setItem(userKey(),JSON.stringify(DB));}catch(e){}}
-function loadLocalCache(){try{const r=localStorage.getItem(userKey());return r?JSON.parse(r):null;}catch(e){return null;}}
-function tsig(t){return JSON.stringify({n:t.name,d:t.date,l:t.location,c:t.createdAt,s:t.state});}
-async function cloudLoad(){
-  syncSet("sync");_cloudSig={};
-  try{
-    const {data,error}=await sb.from("tournaments").select("id,updated_at,payload");
-    if(error)throw error;
-    const byId={};
-    (data||[]).forEach(row=>{ if(row.payload){byId[row.id]=row.payload; _cloudSig[row.id]=tsig(row.payload);} });
-    const cache=loadLocalCache();
-    if(cache&&cache.tournaments)cache.tournaments.forEach(t=>{ const r=byId[t.id]; if(!r||(t.updatedAt||0)>(r.updatedAt||0))byId[t.id]=t; });
-    DB={tournaments:Object.values(byId).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))};
-    cacheLocal(); syncSet("ok");
-    await cloudFlush();
-  }catch(e){ const cache=loadLocalCache(); if(cache)DB=cache; syncSet("offline"); }
-}
-function scheduleCloudSync(){ if(!sb||!user)return; clearTimeout(_cloudTimer); _cloudTimer=setTimeout(cloudFlush,1000); }
-async function cloudFlush(){
-  if(!sb||!user)return;
-  try{
-    const rows=[];
-    DB.tournaments.forEach(t=>{const s=tsig(t);if(_cloudSig[t.id]!==s)rows.push({id:t.id,user_id:user.id,updated_at:t.updatedAt||Date.now(),payload:t,_s:s});});
-    if(rows.length){syncSet("sync");const {error}=await sb.from("tournaments").upsert(rows.map(r=>({id:r.id,user_id:r.user_id,updated_at:r.updated_at,payload:r.payload})));if(error)throw error;rows.forEach(r=>_cloudSig[r.id]=r._s);}
-    const ids=new Set(DB.tournaments.map(t=>t.id));
-    const gone=Object.keys(_cloudSig).filter(id=>!ids.has(id));
-    if(gone.length){const {error}=await sb.from("tournaments").delete().in("id",gone);if(error)throw error;gone.forEach(id=>delete _cloudSig[id]);}
-    syncSet("ok");
-  }catch(e){ syncSet("offline"); }
-}
-function syncSet(s){ syncState=s; const el=document.getElementById("syncBadge"); if(el)el.outerHTML=syncBadge(); }
-function syncBadge(){
-  const map={idle:["#71717A","En attente"],sync:["#1E40AF","Enregistrement…"],ok:["#16A34A","Synchronisé"],offline:["#B45309","Hors-ligne — local"]};
-  const v=map[syncState]||map.idle;
-  return `<span id="syncBadge" class="cloud-badge ${syncState}"><span class="cb-dot" style="background:${v[0]}"></span>${v[1]}</span>`;
-}
-function loadingScreen(){return `<div class="auth-wrap"><div class="auth-card" style="text-align:center"><div class="brand" style="justify-content:center;margin-bottom:14px"><div class="ball"></div><div><h1>Cap Homard</h1></div></div><p class="muted">Connexion…</p></div></div>`;}
-function fatalScreen(msg){return `<div class="auth-wrap"><div class="auth-card"><div class="brand" style="justify-content:center;margin-bottom:14px"><div class="ball"></div><div><h1>Cap Homard</h1></div></div><div class="login-err" style="display:block">${esc(msg)}</div><p class="muted tiny" style="margin-top:12px">Vérifie que le projet est déployé sur Vercel avec le dossier <b>api/</b> et les variables <b>VITE_SUPABASE_URL</b> / <b>VITE_SUPABASE_ANON_KEY</b>.</p></div></div>`;}
+
+/* --- Connexion globale (identifiant + mot de passe en dur) --- */
 function authScreen(){
-  const up=authMode==="up";
   return `<div class="auth-wrap"><div class="auth-card">
     <div class="brand" style="justify-content:center;margin-bottom:18px"><div class="ball"></div><div><h1>Cap Homard</h1><small>Gestion de tournoi beach volley</small></div></div>
-    <div class="seg" style="margin-bottom:16px"><button class="${!up?'on':''}" onclick="authMode='in';authErr='';render()">Connexion</button><button class="${up?'on':''}" onclick="authMode='up';authErr='';render()">Créer un compte</button></div>
-    <label class="fld">E-mail</label><input type="email" id="authEmail" autocomplete="email" placeholder="ton@email.com" onkeydown="if(event.key==='Enter')authSubmit()">
-    <label class="fld" style="margin-top:12px">Mot de passe</label><input type="password" id="authPass" autocomplete="${up?'new-password':'current-password'}" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit()">
+    <label class="fld">Identifiant</label><input type="text" id="authId" autocomplete="username" placeholder="identifiant" onkeydown="if(event.key==='Enter')authSubmit()">
+    <label class="fld" style="margin-top:12px">Mot de passe</label><input type="password" id="authPass" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')authSubmit()">
     ${authErr?`<div class="login-err" style="display:block">${esc(authErr)}</div>`:''}
-    <button class="btn primary" style="width:100%;justify-content:center;margin-top:16px" onclick="authSubmit()">${up?'Créer mon compte':'Se connecter'}</button>
-    <p class="muted tiny" style="text-align:center;margin-top:14px">${up?'Tu as déjà un compte ? Clique « Connexion ».':'Première fois ? Clique « Créer un compte ».'}</p>
+    <button class="btn primary" style="width:100%;justify-content:center;margin-top:16px" onclick="authSubmit()">Se connecter</button>
   </div></div>`;
 }
 async function authSubmit(){
   authErr="";
-  const email=(document.getElementById("authEmail").value||"").trim(), pass=document.getElementById("authPass").value||"";
-  if(!email||!pass){authErr="Renseigne ton e-mail et ton mot de passe.";render();return;}
-  try{
-    if(authMode==="up"){
-      const {data,error}=await sb.auth.signUp({email,password:pass});
-      if(error)throw error;
-      if(!data.session){ authErr="Compte créé. Vérifie tes e-mails pour confirmer, puis connecte-toi."; authMode="in"; render(); return; }
-    } else {
-      const {error}=await sb.auth.signInWithPassword({email,password:pass});
-      if(error)throw error;
-    }
-  }catch(e){ authErr=traduitAuth(e&&e.message); render(); }
+  const id=(document.getElementById("authId").value||"").trim();
+  const pass=document.getElementById("authPass").value||"";
+  if(id!==APP_ID||pass!==APP_PW){ authErr="Identifiant ou mot de passe incorrect."; render(); return; }
+  authed=true; try{localStorage.setItem(AUTH_KEY,"1");}catch(e){}
+  currentId=null;
+  if(cloudReady){ await cloudLoad(); }
+  else { const cache=loadLocalCache(); DB=cache&&cache.tournaments?cache:{tournaments:[]}; syncSet("offline"); }
+  render();
 }
-function traduitAuth(m){m=m||"";if(/Invalid login/i.test(m))return "E-mail ou mot de passe incorrect.";if(/already registered|already been registered/i.test(m))return "Cet e-mail a déjà un compte. Connecte-toi.";if(/Password should|at least 6/i.test(m))return "Mot de passe trop court (6 caractères minimum).";if(/Email not confirmed/i.test(m))return "E-mail non confirmé — vérifie ta boîte mail.";if(/Unable to validate email|valid email/i.test(m))return "Adresse e-mail invalide.";return m;}
-async function logout(){ try{await sb.auth.signOut();}catch(e){} user=null;currentId=null;DB={tournaments:[]};_cloudSig={};render(); }
+function logout(){
+  authed=false; try{localStorage.removeItem(AUTH_KEY);}catch(e){}
+  currentId=null; DB={tournaments:[]}; _cloudSig={}; render();
+}
+
+/* --- Synchronisation Supabase (table partagée unique) --- */
+function tsig(t){return JSON.stringify({n:t.name,d:t.date,l:t.location,c:t.createdAt,s:t.state});}
+
+/* Chargement de TOUS les tournois au démarrage, fusionné avec le cache local (le plus récent gagne). */
+async function cloudLoad(){
+  if(!sb){ const cache=loadLocalCache(); if(cache)DB=cache; syncSet("offline"); return; }
+  syncSet("sync"); _cloudSig={};
+  try{
+    const {data,error}=await sb.from("tournaments").select("id,updated_at,data");
+    if(error){ console.error("[cloud] ERREUR chargement :",error.message,"| details:",error.details,"| hint:",error.hint,"| code:",error.code); throw error; }
+    const byId={};
+    (data||[]).forEach(row=>{ const t=row.data; if(t&&row.id){ byId[row.id]=t; _cloudSig[row.id]=tsig(t); } });
+    console.log("[cloud] chargement OK :",(data||[]).length,"tournoi(s).");
+    // Fusion : un tournoi modifié hors-ligne et plus récent que le cloud est conservé puis renvoyé.
+    const cache=loadLocalCache();
+    if(cache&&cache.tournaments)cache.tournaments.forEach(t=>{ const r=byId[t.id]; if(!r||(t.updatedAt||0)>(r.updatedAt||0))byId[t.id]=t; });
+    DB={tournaments:Object.values(byId).sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0))};
+    cacheLocal(); syncSet("ok");
+    await cloudFlush(); // renvoie d'éventuelles modifs locales plus récentes
+  }catch(e){ console.error("[cloud] chargement échoué, repli local :",e&&e.message); const cache=loadLocalCache(); if(cache)DB=cache; syncSet("offline"); }
+}
+
+function scheduleCloudSync(){ if(!cloudReady||!authed)return; clearTimeout(_cloudTimer); _cloudTimer=setTimeout(cloudFlush,800); }
+
+/* Pousse vers Supabase : upsert des tournois modifiés, suppression de ceux retirés localement. */
+async function cloudFlush(){
+  if(!sb||!cloudReady||!authed)return;
+  try{
+    const rows=[], now=new Date().toISOString();
+    DB.tournaments.forEach(t=>{ const s=tsig(t);
+      if(_cloudSig[t.id]!==s) rows.push({_id:t.id,_s:s,row:{
+        id:t.id, name:t.name||null, event_date:t.date||null, data:t,
+        updated_at:t.updatedAt?new Date(t.updatedAt).toISOString():now
+      }});
+    });
+    if(rows.length){
+      syncSet("sync");
+      console.log("[cloud] upsert de",rows.length,"tournoi(s) :",rows.map(r=>r._id));
+      const {error}=await sb.from("tournaments").upsert(rows.map(r=>r.row),{onConflict:"id"});
+      if(error){ console.error("[cloud] ❌ ERREUR upsert :",error.message,"| details:",error.details,"| hint:",error.hint,"| code:",error.code); throw error; }
+      console.log("[cloud] ✅ upsert OK :",rows.length,"ligne(s).");
+      rows.forEach(r=>_cloudSig[r._id]=r._s);
+    }
+    const ids=new Set(DB.tournaments.map(t=>t.id));
+    const gone=Object.keys(_cloudSig).filter(id=>!ids.has(id));
+    if(gone.length){
+      console.log("[cloud] suppression de",gone.length,"tournoi(s) :",gone);
+      const {error}=await sb.from("tournaments").delete().in("id",gone);
+      if(error){ console.error("[cloud] ❌ ERREUR delete :",error.message,error.details,error.hint,error.code); throw error; }
+      gone.forEach(id=>delete _cloudSig[id]);
+    }
+    syncSet("ok");
+  }catch(e){ console.error("[cloud] ❌ synchronisation échouée :",e&&e.message); syncSet("error"); }
+}
+
+function syncSet(s){ syncState=s; const el=document.getElementById("syncBadge"); if(el)el.outerHTML=syncBadge(); }
+function syncBadge(){
+  const map={idle:["#71717A","En attente"],sync:["#1E40AF","Enregistrement…"],ok:["#16A34A","Synchronisé"],offline:["#B45309","Hors-ligne — local"],error:["#DC2626","Erreur — voir console (F12)"]};
+  const v=map[syncState]||map.idle;
+  return `<span id="syncBadge" class="cloud-badge ${syncState}"><span class="cb-dot" style="background:${v[0]}"></span>${v[1]}</span>`;
+}
+function loadingScreen(){return `<div class="auth-wrap"><div class="auth-card" style="text-align:center"><div class="brand" style="justify-content:center;margin-bottom:14px"><div class="ball"></div><div><h1>Cap Homard</h1></div></div><p class="muted">Chargement…</p></div></div>`;}
 function uid(){return Math.random().toString(36).slice(2,9);}
 
 /* ===================== MOTEUR ===================== */
@@ -876,9 +905,8 @@ function render(){
   const root=document.getElementById("root");
   const sp=parseHash();
   if(sp){renderSpectator(sp,root);return;}
-  if(bootErr){root.innerHTML=fatalScreen(bootErr);return;}
-  if(!sb){root.innerHTML=loadingScreen();return;}
-  if(!user){root.innerHTML=authScreen();return;}
+  if(bootErr){root.innerHTML=loadingScreen();return;}
+  if(!authed){root.innerHTML=authScreen();return;}
   if(!currentId||!cur()){currentId=null;root.innerHTML=homeScreen();persist();return;}
   S=cur().state;
   root.innerHTML=`<div class="app"><aside class="sidebar">
@@ -977,7 +1005,7 @@ function homeScreen(){
   return `<div class="home">
     <header class="home-head">
       <div class="brand"><div class="ball"></div><div><h1>Cap Homard</h1><small>Gestion de tournoi beach volley</small></div></div>
-      <div class="spread" style="gap:12px">${syncBadge()}<span class="user-pill">${esc((user&&user.email)||'')}</span><button class="btn ghost sm" onclick="logout()">⏻ Déconnexion</button></div>
+      <div class="spread" style="gap:12px">${syncBadge()}<span class="user-pill">${esc(APP_ID)}</span><button class="btn ghost sm" onclick="logout()">⏻ Déconnexion</button></div>
     </header>
     <div class="home-body">
       <div class="card create-card">
@@ -999,12 +1027,12 @@ function createTournament(){
   const loc=(document.getElementById("nt_loc").value||"").trim();
   const st=DEFAULT();st.config.name=name;
   const t={id:uid(),name,date,location:loc,createdAt:Date.now(),updatedAt:Date.now(),state:st};
-  DB.tournaments.push(t);openTournament(t.id);
+  DB.tournaments.push(t);cacheLocal();cloudFlush();/* sauvegarde immédiate */openTournament(t.id);
 }
 function openTournament(id){currentId=id;S=cur().state;route="config";editId=null;render();}
 function backHome(){currentId=null;editId=null;persist();render();}
-function deleteTournament(id){const t=DB.tournaments.find(x=>x.id===id);if(!t)return;if(!confirm("Supprimer définitivement « "+t.name+" » ?"))return;DB.tournaments=DB.tournaments.filter(x=>x.id!==id);if(currentId===id)currentId=null;persist();render();}
-function duplicateTournament(id){const t=DB.tournaments.find(x=>x.id===id);if(!t)return;const copy=JSON.parse(JSON.stringify(t));copy.id=uid();copy.name=t.name+" (copie)";copy.state.config.name=copy.name;copy.createdAt=Date.now();copy.updatedAt=Date.now();DB.tournaments.push(copy);toast("Tournoi dupliqué");persist();render();}
+function deleteTournament(id){const t=DB.tournaments.find(x=>x.id===id);if(!t)return;if(!confirm("Supprimer définitivement « "+t.name+" » ?"))return;DB.tournaments=DB.tournaments.filter(x=>x.id!==id);if(currentId===id)currentId=null;cacheLocal();cloudFlush();/* suppression immédiate dans Supabase */render();}
+function duplicateTournament(id){const t=DB.tournaments.find(x=>x.id===id);if(!t)return;const copy=JSON.parse(JSON.stringify(t));copy.id=uid();copy.name=t.name+" (copie)";copy.state.config.name=copy.name;copy.createdAt=Date.now();copy.updatedAt=Date.now();DB.tournaments.push(copy);toast("Tournoi dupliqué");cacheLocal();cloudFlush();render();}
 function saveMeta(id){const t=DB.tournaments.find(x=>x.id===id);if(!t)return;t.name=(document.getElementById("ed_name").value||"").trim()||t.name;t.date=(document.getElementById("ed_date").value||"").trim();t.location=(document.getElementById("ed_loc").value||"").trim();t.state.config.name=t.name;editId=null;persist();render();}
 
 /* ===================== RESET LOGIC ===================== */
