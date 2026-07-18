@@ -83,6 +83,10 @@ label.fld{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);mar
 .team-chip .x:hover{background:#fff;color:var(--bad)}
 .seed-btn{border:1px solid var(--line);background:#fff;border-radius:6px;font-size:11px;padding:3px 7px;cursor:pointer;font-weight:700;color:var(--ink-soft)}
 .seed-btn.on{background:var(--gold);border-color:var(--gold);color:#fff}
+.rn-btn{border:1px solid var(--line);background:#fff;border-radius:6px;font-size:12px;padding:3px 7px;cursor:pointer;font-weight:700;color:var(--sea)}
+.rn-btn:hover{background:var(--sea);border-color:var(--sea);color:#fff}
+.team-chip.editing{border-color:var(--sea);background:#F4F8FE;flex-wrap:wrap;gap:7px}
+.team-chip .rn-input{flex:1;min-width:120px;padding:6px 9px;border:1px solid var(--sea);border-radius:8px;font-size:13.5px;font-weight:600}
 .counter{font-size:13px;font-weight:600}
 .pill{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:var(--sand-2);color:var(--ink-soft)}
 .pill.ok{background:#E2F0E6;color:var(--ok)}.pill.warn{background:#FAE9DF;color:var(--coral-d)}
@@ -109,6 +113,12 @@ label.fld{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);mar
 .match .nm2{text-align:left;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .match .vs{text-align:center;color:var(--ink-soft);font-size:10px}
 .match input{padding:5px;text-align:center;font-weight:700;font-size:13px}
+input.dirty{border-color:var(--sea)!important;background:#EFF5FE;box-shadow:0 0 0 2px rgba(30,64,175,.12)}
+.savebar{position:sticky;bottom:12px;z-index:45;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#fff;border:1.5px solid var(--sea);border-radius:14px;box-shadow:0 8px 28px rgba(30,64,175,.18);padding:12px 16px;margin-top:20px}
+.savebar.hidden{display:none}
+.savebar .sb-info{font-size:13.5px;font-weight:700;color:var(--ink)}
+.savebar .sb-actions{display:flex;gap:8px}
+@media(max-width:560px){.savebar{bottom:8px;padding:10px 12px}.savebar .sb-info{font-size:12.5px}}
 .match .win{color:var(--ok)}
 .ref{font-size:10px;color:var(--ink-soft);text-align:center;padding:0 0 6px;border-bottom:1px solid #f2ecdf;margin-bottom:2px}
 .ref b{color:var(--sea)}
@@ -257,7 +267,10 @@ label.fld{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);mar
 .qual-list li:last-child{border:none}
 .qual-list .q-badge{width:18px;height:18px;border-radius:5px;display:inline-grid;place-items:center;font-size:11px;font-weight:900;flex:none}
 .qual-list .q-in .q-badge{background:#E2F0E6;color:var(--ok)}
-.qual-list .q-out{opacity:.72}.qual-list .q-out .q-badge{background:#F7E0DC;color:var(--bad)}
+.qual-list .q-out{opacity:.9}.qual-list .q-out .q-badge{background:#FBF0D2;color:#9a7a12;font-size:9px}
+.sc-card{border-color:#EBDFB8;background:linear-gradient(180deg,#FCF9EF,#fff)}
+.sc-src{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-soft);margin:14px 0 2px}
+.sc-src:first-of-type{margin-top:0}
 .qual-list .cutline{flex-basis:100%;text-align:center;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--coral);margin:4px 0;border-top:1px dashed var(--coral);padding-top:6px}
 .qual-list sup{font-size:.7em}
 
@@ -411,7 +424,7 @@ const DEFAULT=()=>({
   teams:[], qualif:{pools:null}, haute:{pools:null}, basse:{pools:null}, finals:{haute:null,basse:null}
 });
 let DB={tournaments:[]};
-let currentId=null, route="config", finalTab="haute", editId=null;
+let currentId=null, route="config", finalTab="haute", editId=null, renameId=null;
 let S=DEFAULT(); // référence vivante vers le tournoi ouvert
 const LOCAL_KEY="capHomardDB"; // cache local unique (connexion globale, pas de multi-utilisateurs)
 function cur(){return DB.tournaments.find(t=>t.id===currentId);}
@@ -916,7 +929,10 @@ const PAGES=[
   {id:"hb",n:"▥",t:"Poules H & B"},{id:"finals",n:"♛",t:"Phases finales"},{id:"final",n:"★",t:"Classement final"},
   {id:"share",n:"📣",t:"Live & partage"},
 ];
-function go(id){route=id;render();window.scrollTo(0,0);}
+function go(id){
+  if(typeof draft==="object"&&Object.keys(draft).length&&!confirm("Des scores non enregistrés seront perdus. Continuer sans enregistrer ?"))return;
+  draft={}; route=id;render();window.scrollTo(0,0);
+}
 function render(){
   const root=document.getElementById("root");
   const sp=parseHash();
@@ -1048,7 +1064,7 @@ function createTournament(){
   DB.tournaments.push(t);cacheLocal();cloudFlush();/* sauvegarde immédiate */openTournament(t.id);
 }
 function openTournament(id){currentId=id;S=cur().state;route="config";editId=null;render();}
-function backHome(){currentId=null;editId=null;persist();render();}
+function backHome(){if(typeof draft==="object"&&Object.keys(draft).length&&!confirm("Des scores non enregistrés seront perdus. Continuer sans enregistrer ?"))return;draft={};currentId=null;editId=null;persist();render();}
 function deleteTournament(id){const t=DB.tournaments.find(x=>x.id===id);if(!t)return;if(!confirm("Supprimer définitivement « "+t.name+" » ?"))return;DB.tournaments=DB.tournaments.filter(x=>x.id!==id);if(currentId===id)currentId=null;cacheLocal();cloudFlush();/* suppression immédiate dans Supabase */render();}
 function duplicateTournament(id){const t=DB.tournaments.find(x=>x.id===id);if(!t)return;const copy=JSON.parse(JSON.stringify(t));copy.id=uid();copy.name=t.name+" (copie)";copy.state.config.name=copy.name;copy.createdAt=Date.now();copy.updatedAt=Date.now();DB.tournaments.push(copy);toast("Tournoi dupliqué");cacheLocal();cloudFlush();render();}
 function saveMeta(id){const t=DB.tournaments.find(x=>x.id===id);if(!t)return;t.name=(document.getElementById("ed_name").value||"").trim()||t.name;t.date=(document.getElementById("ed_date").value||"").trim();t.location=(document.getElementById("ed_loc").value||"").trim();t.state.config.name=t.name;editId=null;persist();render();}
@@ -1156,13 +1172,25 @@ function pageTeams(){
       <div class="row"><button class="btn sm" onclick="seedFirst()">Marquer ${nP||'?'} têtes de série</button><button class="btn sm" onclick="if(confirm('Vider la liste ?')){S.teams=[];resetFrom('draw');render()}">Tout effacer</button></div>
     </div>
     ${n===0?'<p class="muted tiny">Aucune équipe. Astuce : le bouton ⚡ démo crée tout automatiquement.</p>':
-      `<div class="team-list">${S.teams.map((t,i)=>`<div class="team-chip ${t.seed?'seed':''}"><span class="idx">${i+1}</span><span class="nm" title="${esc(t.name)}">${esc(t.name)}</span><button class="seed-btn ${t.seed?'on':''}" onclick="toggleSeed('${t.id}')" title="Tête de série">⭐</button><button class="x" onclick="removeTeam('${t.id}')">×</button></div>`).join("")}</div>`}
+      `<div class="team-list">${S.teams.map((t,i)=>renameId===t.id
+        ? `<div class="team-chip editing"><span class="idx">${i+1}</span><input type="text" id="rn_${t.id}" class="rn-input" value="${esc(t.name)}" onkeydown="if(event.key==='Enter')renameTeam('${t.id}');if(event.key==='Escape'){renameId=null;render()}"><button class="btn primary sm" onclick="renameTeam('${t.id}')">OK</button><button class="btn sm" onclick="renameId=null;render()">Annuler</button></div>`
+        : `<div class="team-chip ${t.seed?'seed':''}"><span class="idx">${i+1}</span><span class="nm" title="${esc(t.name)}">${esc(t.name)}</span><button class="rn-btn" onclick="startRename('${t.id}')" title="Renommer">✎</button><button class="seed-btn ${t.seed?'on':''}" onclick="toggleSeed('${t.id}')" title="Tête de série">⭐</button><button class="x" onclick="removeTeam('${t.id}')">×</button></div>`).join("")}</div>`}
   </div>
   ${ready?`<div class="card"><div class="spread"><div><h3 class="sec" style="margin:0">Prêt pour le tirage</h3><p class="muted tiny" style="margin:4px 0 0">${n} équipes → ${nP} poules (${sizes.join('/')}).</p></div><button class="btn primary" onclick="go('draw')">Tirage des poules →</button></div></div>`:""}`;
 }
 function addTeam(){const el=document.getElementById("newTeam"),v=el.value.trim();if(!v)return;S.teams.push({id:uid(),name:v,seed:false});el.value="";resetFrom('draw');render();document.getElementById("newTeam").focus();}
 function removeTeam(id){S.teams=S.teams.filter(t=>t.id!==id);resetFrom('draw');render();}
 function toggleSeed(id){const t=teamById(id);t.seed=!t.seed;resetFrom('draw');render();}
+function startRename(id){renameId=id;render();setTimeout(()=>{const el=document.getElementById("rn_"+id);if(el){el.focus();el.select();}},0);}
+/* Renommage PUREMENT VISUEL : ne modifie que le nom affiché.
+   L'id de l'équipe est conservé → matchs, scores, classements, qualifications et QR inchangés.
+   Aucun resetFrom : l'organisation du tournoi n'est pas touchée. */
+function renameTeam(id){
+  const el=document.getElementById("rn_"+id); const t=teamById(id);
+  if(t&&el){ const v=el.value.trim(); if(v)t.name=v; }
+  renameId=null; persist(); render();
+  toast("Nom de l'équipe mis à jour");
+}
 function seedFirst(){const k=bestSizes(S.teams.length).length;S.teams.forEach((t,i)=>t.seed=i<k);resetFrom('draw');render();}
 
 /* ===================== 3. TIRAGE ===================== */
@@ -1225,12 +1253,15 @@ function poolCard(phase,idx,L,sea){
   const rows=pool.matches.map((m,mi)=>{
     const id1=pool.teams[m.i],id2=pool.teams[m.j],ref=m.ref>=0?pool.teams[m.ref]:null;
     const s=pool.scores[mi]||["",""];
-    const w1=s[0]!==""&&s[1]!==""&&+s[0]>+s[1],w2=s[0]!==""&&s[1]!==""&&+s[1]>+s[0];
+    const kA=`P|${phase}|${idx}|${mi}|0`,kB=`P|${phase}|${idx}|${mi}|1`;
+    const dA=(kA in draft),dB=(kB in draft);
+    const vA=dA?draft[kA]:s[0],vB=dB?draft[kB]:s[1];
+    const w1=vA!==""&&vB!==""&&+vA>+vB,w2=vA!==""&&vB!==""&&+vB>+vA;
     return `<div class="match"><span class="mno">${mi+1}</span>
       <span class="nm1 ${w1?'win':''}" title="${esc(teamName(id1))}">${esc(teamName(id1))}</span>
-      <input type="number" min="0" value="${s[0]}" onchange="setScore('${phase}',${idx},${mi},0,this.value)">
+      <input type="number" min="0" inputmode="numeric" class="${dA?'dirty':''}" value="${vA}" onchange="draftPool('${phase}',${idx},${mi},0,this)">
       <span class="vs">—</span>
-      <input type="number" min="0" value="${s[1]}" onchange="setScore('${phase}',${idx},${mi},1,this.value)">
+      <input type="number" min="0" inputmode="numeric" class="${dB?'dirty':''}" value="${vB}" onchange="draftPool('${phase}',${idx},${mi},1,this)">
       <span class="nm2 ${w2?'win':''}" title="${esc(teamName(id2))}">${esc(teamName(id2))}</span></div>
       <div class="ref">${ref?`arbitre : <b>${esc(teamName(ref))}</b>`:'&nbsp;'}</div>`;
   }).join("");
@@ -1250,6 +1281,43 @@ function setScore(phase,idx,mi,side,val){
   render();
 }
 
+/* ===================== SAISIE EN BROUILLON + BOUTON « ENREGISTRER » =====================
+   Les scores ne sont plus enregistrés à chaque frappe : ils sont mis en attente
+   jusqu'au clic sur « Enregistrer les scores ». Cela permet de relire avant de valider.
+   La MÉCANIQUE n'est pas touchée : à l'enregistrement, on applique exactement la même
+   écriture et le même resetFrom que la saisie directe historique.                          */
+let draft={};
+function hasDraft(){return Object.keys(draft).length>0;}
+function draftKeyCount(){const set=new Set();Object.keys(draft).forEach(k=>{const p=k.split("|");p.pop();set.add(p.join("|"));});return set.size;}
+function markDirty(){const bar=document.getElementById("saveBar");if(bar){const c=draftKeyCount();const el=document.getElementById("sbCount");if(el)el.textContent=c;bar.classList.toggle("hidden",c===0);}}
+function draftPool(phase,idx,mi,side,el){draft[`P|${phase}|${idx}|${mi}|${side}`]=el.value;el.classList.add("dirty");markDirty();}
+function draftBracket(side,ri,mi,which,el){draft[`B|${side}|${ri}|${mi}|${which}`]=el.value;el.classList.add("dirty");markDirty();}
+function saveBar(){return `<div id="saveBar" class="savebar ${hasDraft()?'':'hidden'}"><span class="sb-info">📝 <b id="sbCount">${draftKeyCount()}</b> match(s) modifié(s) — non enregistré(s)</span><div class="sb-actions"><button class="btn sm" onclick="discardScores()">Annuler</button><button class="btn primary" onclick="commitScores()">✓ Enregistrer les scores</button></div></div>`;}
+function discardScores(){draft={};render();toast("Modifications annulées");}
+function commitScores(){
+  const keys=Object.keys(draft); if(!keys.length){toast("Aucune modification à enregistrer");return;}
+  const d=draft; draft={};
+  let touchedQualif=false, touchedAfternoon=false;
+  keys.forEach(k=>{
+    const val=d[k], p=k.split("|");
+    if(p[0]==="P"){
+      const phase=p[1],idx=+p[2],mi=+p[3],side=+p[4];
+      const store=phaseStore(phase); const pool=store&&store.pools&&store.pools[idx];
+      if(pool&&pool.scores[mi]) pool.scores[mi][side]= val===""?"":(+val); // écriture identique à setScore
+      if(phase==="qualif")touchedQualif=true; else touchedAfternoon=true;
+    } else if(p[0]==="B"){
+      const side=p[1],ri=p[2],mi=+p[3],which=p[4];
+      const br=S.finals[side]; if(!br)return;
+      const m=ri==="P"?(br.extra&&br.extra.petite):(br.rounds[+ri]&&br.rounds[+ri][mi]);
+      if(m) m[which]= val===""?"":(+val); // écriture identique à setBracket
+    }
+  });
+  // resetFrom strictement identique à la saisie directe historique (aucune régression de logique)
+  if(touchedQualif) resetFrom('split');
+  else if(touchedAfternoon) resetFrom('finals');
+  persist(); render(); toast("Scores enregistrés ✅");
+}
+
 /* ===================== 5. POULES QUALIF ===================== */
 function pagePools(){
   if(!S.qualif.pools)return head("Étape 4","Poules de qualification","")+emptyState("▦","Pas encore de poules","Lance d'abord le tirage.",`<button class="btn primary" style="margin-top:14px" onclick="go('draw')">Aller au tirage</button>`);
@@ -1258,7 +1326,7 @@ function pagePools(){
   return head("Étape 4","Poules de qualification",`Round-robin : chaque équipe affronte toutes les autres de sa poule. Matchs en ${S.config.points} points. Classement automatique au coefficient. Les ${S.config.qualifPerPool} premiers (surlignés) montent en Tableau Haut.`)+
    journalQualif()+
    `<div class="spread" style="margin-bottom:16px"><span class="pill ${done===tot?'ok':''}">${done}/${tot} poules terminées</span><button class="btn sm" onclick="go('split')">Qualification H/B →</button></div>
-    <div class="pool-grid">${S.qualif.pools.map((p,idx)=>poolCard("qualif",idx,plabel(idx),false)).join("")}</div>`;
+    <div class="pool-grid">${S.qualif.pools.map((p,idx)=>poolCard("qualif",idx,plabel(idx),false)).join("")}</div>`+saveBar();
 }
 
 /* ===================== 6. QUALIFICATION H/B ===================== */
@@ -1309,7 +1377,7 @@ function pageHB(){
    journalHB()+
    `<h3 class="sec" style="color:var(--coral)">▲ Tableau Haut</h3><div class="pool-grid">${S.haute.pools.map((p,idx)=>poolCard("haute",idx,"H"+(idx+1),false)).join("")}</div>
     <h3 class="sec" style="color:var(--sea);margin-top:28px">▼ Tableau Bas (consolante)</h3><div class="pool-grid">${S.basse.pools.map((p,idx)=>poolCard("basse",idx,"C"+(idx+1),true)).join("")}</div>
-    <div class="card" style="margin-top:18px"><div class="spread"><span class="muted tiny">Poules finies ? Place aux phases finales.</span><button class="btn primary" onclick="go('finals')">Phases finales →</button></div></div>`;
+    <div class="card" style="margin-top:18px"><div class="spread"><span class="muted tiny">Poules finies ? Place aux phases finales.</span><button class="btn primary" onclick="go('finals')">Phases finales →</button></div></div>`+saveBar();
 }
 
 /* ===================== 8. PHASES FINALES ===================== */
@@ -1337,7 +1405,8 @@ function pageFinals(){
   else body=renderBracket(finalTab)+(finalTab==="haute"?explainBlock(S.haute.pools,S.finals.haute,"H","Tableau principal","var(--coral)"):explainBlock(S.basse.pools,S.finals.basse,"C","Consolante","var(--sea)"));
   return head("Étape 7","Phases finales",`Tableaux à élimination directe générés automatiquement selon le nombre de qualifiés (4, 8, 16, 32…). Saisis les scores : les vainqueurs avancent seuls.`)+
     journalFinals()+
-    `<div class="bracket-tabs">${tab("haute","▲ Tableau principal","var(--coral)")}${tab("basse","▼ Consolante","var(--sea)")}</div>${body}`;
+    `<div class="bracket-tabs">${tab("haute","▲ Tableau principal","var(--coral)")}${tab("basse","▼ Consolante","var(--sea)")}</div>${body}`+
+    superConsolanteBlock()+saveBar();
 }
 function courtBadge(matchSeq,isBig){
   const c=S.config;
@@ -1368,7 +1437,8 @@ function bmatchHTML(side,ri,mi,m,editable,courtTag){
   const w=bWin(m);
   const teamRow=(t,score,which)=>{
     const isW=w&&t&&w.id===t.id, disabled=(!t||!m.a||!m.b)&&!editable&&ri!=="P";
-    return `<div class="bteam ${isW?'win':''}"><span class="bn">${t?`${t.seed?`<span class="seedtag">#${t.seed}</span>`:""}${esc(teamName(t.id))}`:'<span style="color:#c9c0ae">—</span>'}</span><input type="number" min="0" value="${score}" ${disabled?'disabled':''} onchange="setBracket('${side}','${ri}',${mi},'${which}',this.value)"></div>`;
+    const bk=`B|${side}|${ri}|${mi}|${which}`; const dirty=(bk in draft); const val=dirty?draft[bk]:score;
+    return `<div class="bteam ${isW?'win':''}"><span class="bn">${t?`${t.seed?`<span class="seedtag">#${t.seed}</span>`:""}${esc(teamName(t.id))}`:'<span style="color:#c9c0ae">—</span>'}</span><input type="number" min="0" inputmode="numeric" class="${dirty?'dirty':''}" value="${val}" ${disabled?'disabled':''} onchange="draftBracket('${side}','${ri}',${mi},'${which}',this)"></div>`;
   };
   return `<div class="bmatch">${courtTag}${teamRow(m.a,m.sa,"sa")}${teamRow(m.b,m.sb,"sb")}</div>`;
 }
@@ -1514,19 +1584,39 @@ function explainQualification(pools,bracket){
       if(grpAllIn)why=`${x.pos}<sup>${x.pos===1?'re':'e'}</sup> de la poule {P}${x.poolIndex+1}`;
       else why=`meilleur ${x.pos}<sup>e</sup> (${x.w} victoire${x.w>1?'s':''}, coeff ${coeffTxt}, diff ${x.diff>=0?'+':''}${x.diff})`;
     } else {
-      if(grpAllOut)why=`${x.pos}<sup>e</sup> de poule — non qualifié(e)`;
-      else why=`${x.pos}<sup>e</sup> non retenu(e) (${x.w} victoire${x.w>1?'s':''}, coeff ${coeffTxt}, diff ${x.diff>=0?'+':''}${x.diff}) — derrière au départage`;
+      if(grpAllOut)why=`${x.pos}<sup>e</sup> de poule — en Super Consolante`;
+      else why=`${x.pos}<sup>e</sup> — en Super Consolante (derrière au départage : ${x.w} victoire${x.w>1?'s':''}, coeff ${coeffTxt}, diff ${x.diff>=0?'+':''}${x.diff})`;
     }
     return {id:x.id,qualified,why,poolIndex:x.poolIndex};
   });
-  return {rows:rows.filter((r,i)=>i<size+4),size,total:order.length};
+  return {rows,size,total:order.length}; // liste complète : aucune équipe non qualifiée n'est masquée
 }
 function explainBlock(pools,bracket,prefix,title,col){
   const ex=explainQualification(pools,bracket);if(!ex)return "";
-  const lis=ex.rows.map((r,i)=>`<li class="${r.qualified?'q-in':'q-out'}">${i===ex.size?'<div class="cutline">barre de qualification</div>':''}<span class="q-badge">${r.qualified?'✓':'✗'}</span><b>${esc(teamName(r.id))}</b> — ${r.why.replace('{P}',prefix)}</li>`).join("");
+  const lis=ex.rows.map((r,i)=>`<li class="${r.qualified?'q-in':'q-out'}">${i===ex.size?'<div class="cutline">barre de qualification pour le tableau final</div>':''}<span class="q-badge">${r.qualified?'✓':'SC'}</span><b>${esc(teamName(r.id))}</b> — ${r.why.replace('{P}',prefix)}</li>`).join("");
   return `<div class="card"><h3 class="sec" style="color:${col}">Explication de la qualification — ${title}</h3>
-    <p class="muted tiny" style="margin:-6px 0 10px">${ex.size} équipes qualifiées sur ${ex.total}. Critère : ${(S.config.rankMode||'wins')==='wins'?'victoires → coefficient → différence → confrontation directe':'coefficient → victoires'}.</p>
+    <p class="muted tiny" style="margin:-6px 0 10px">${ex.size} équipes qualifiées sur ${ex.total} pour le tableau final. Les autres (<b>SC</b>) rejoignent la <b>Super Consolante</b>. Critère : ${(S.config.rankMode||'wins')==='wins'?'victoires → coefficient → différence → confrontation directe':'coefficient → victoires'}.</p>
     <ul class="qual-list">${lis}</ul></div>`;
+}
+
+/* Liste COMPLÈTE des équipes non qualifiées pour un tableau final → Super Consolante.
+   Réutilise exactement la logique de qualification existante (aucun calcul parallèle). */
+function superConsolanteBlock(){
+  const groups=[];
+  const collect=(pools,bracket,srcLabel)=>{
+    const ex=explainQualification(pools,bracket); if(!ex)return;
+    const outs=ex.rows.filter(r=>!r.qualified);
+    if(outs.length)groups.push({src:srcLabel,teams:outs});
+  };
+  collect(S.haute&&S.haute.pools,S.finals&&S.finals.haute,"Issues des poules hautes");
+  collect(S.basse&&S.basse.pools,S.finals&&S.finals.basse,"Issues des poules basses");
+  const totalOut=groups.reduce((n,g)=>n+g.teams.length,0);
+  if(!groups.length)return "";
+  const lists=groups.map(g=>`<div class="sc-src">${esc(g.src)} — ${g.teams.length} équipe${g.teams.length>1?'s':''}</div>
+    <ul class="qual-list">${g.teams.map(r=>`<li class="q-out"><span class="q-badge">SC</span><b>${esc(teamName(r.id))}</b></li>`).join("")}</ul>`).join("");
+  return `<div class="card sc-card"><h3 class="sec" style="color:var(--gold)">Équipes en Super Consolante</h3>
+    <p class="muted tiny" style="margin:-6px 0 12px">Ces <b>${totalOut}</b> équipes ne sont <b>pas éliminées</b> : elles ne rejoignent pas le tableau final (8es, quarts, demies…) et participeront à la <b>Super Consolante</b>. Liste complète (poules hautes + poules basses) pour organiser cette phase.</p>
+    ${lists}</div>`;
 }
 
 function pageShare(){
