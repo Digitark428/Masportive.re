@@ -84,3 +84,13 @@ Tu peux laisser les joueurs saisir eux-mêmes leurs scores depuis le live (le to
 4. Les scores arrivent **en direct** dans ton tournoi. Tu gardes toujours la main pour corriger via les pages d'admin habituelles.
 
 > Désactivée, l'app fonctionne exactement comme avant (toi seul saisis les scores).
+
+## Nouveautés (formats, impression, Live, phases optionnelles)
+- **Formats de score** : Réglages → nombre de points (15/21/25) + règle de victoire (score sec / 2 pts d'écart).
+- **Impression** : bouton 🖨️ sur chaque poule + « Imprimer toutes les poules » ; tableaux finaux imprimables (A4 paysage) depuis les Phases finales.
+- **Anti-revanche** : les tableaux évitent qu'deux équipes d'une même poule se croisent au 1er tour (sauf si impossible).
+- **Super Consolante / Challenge** (optionnel) : depuis les Phases finales, créer une phase pour les équipes non qualifiées (poules ou tableau direct, auto ou manuel). Si non utilisé, rien ne change.
+- **Reconfigurer l'après-midi** (optionnel) : à l'étape Qualification H/B, bouton « ⚙ Reconfigurer l'après-midi » pour changer répartition, terrains, format de score et format des phases finales — sans jamais toucher aux résultats du matin.
+- **Live par onglets** : suivi chronologique coloré (Poules matin → Hautes/Consolantes → Super C./Challenge → Tableaux) avec barre de progression. Le lien/QR reste identique.
+
+> Toutes ces options sont facultatives : si tu ne les utilises pas, l'app fonctionne comme avant. Rien à changer côté Supabase.

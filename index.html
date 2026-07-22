@@ -98,6 +98,9 @@ label.fld{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);mar
 .pool-h .badge{width:24px;height:24px;border-radius:7px;background:var(--coral);display:grid;place-items:center;font-size:12px;font-weight:800}
 .pool-h.sea .badge{background:var(--sea)}
 .pool-h .court-tag{font-size:10px;font-weight:700;background:rgba(255,255,255,.16);padding:2px 7px;border-radius:99px}
+.pool-h .ph-right{display:flex;align-items:center;gap:8px}
+.print-btn{background:rgba(255,255,255,.16);border:none;color:#fff;cursor:pointer;font-size:13px;padding:3px 8px;border-radius:7px;line-height:1}
+.print-btn:hover{background:rgba(255,255,255,.32)}
 .pool-body{padding:6px 12px 12px}
 .standtbl{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
 .standtbl th{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-soft);font-weight:700;text-align:center;padding:6px 4px;border-bottom:1px solid var(--line)}
@@ -114,6 +117,13 @@ label.fld{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);mar
 .match .vs{text-align:center;color:var(--ink-soft);font-size:10px}
 .match input{padding:5px;text-align:center;font-weight:700;font-size:13px}
 input.dirty{border-color:var(--sea)!important;background:#EFF5FE;box-shadow:0 0 0 2px rgba(30,64,175,.12)}
+.fmt-pill{display:inline-flex;align-items:center;gap:6px;background:#EAF1FB;border:1px solid #CFE0F5;color:var(--sea);font-weight:700;font-size:13px;padding:9px 14px;border-radius:10px}
+.assist-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:10px 0}
+.assist-card{border:1px solid var(--line);border-radius:12px;padding:12px}
+.assist-card h5{margin:0 0 4px;font-size:13px}
+.btn.sm.danger{color:var(--bad);border-color:#f0cfc9}
+.btn.sm.danger:hover{background:var(--bad);color:#fff}
+.score-warn{color:#9a6a12;font-weight:700;font-size:11px}
 .savebar{position:sticky;bottom:12px;z-index:45;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#fff;border:1.5px solid var(--sea);border-radius:14px;box-shadow:0 8px 28px rgba(30,64,175,.18);padding:12px 16px;margin-top:20px}
 .savebar.hidden{display:none}
 .savebar .sb-info{font-size:13.5px;font-weight:700;color:var(--ink)}
@@ -221,9 +231,24 @@ input.dirty{border-color:var(--sea)!important;background:#EFF5FE;box-shadow:0 0 
 .live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.12);padding:4px 10px;border-radius:99px;font-size:10px;font-weight:800;letter-spacing:.5px;white-space:nowrap}
 .live-badge .dot{width:7px;height:7px;border-radius:50%;background:#ff5b5b;box-shadow:0 0 0 0 rgba(255,91,91,.6);animation:pulse 1.6s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,91,91,.6)}70%{box-shadow:0 0 0 7px rgba(255,91,91,0)}100%{box-shadow:0 0 0 0 rgba(255,91,91,0)}}
-.spec-tabs{position:sticky;top:52px;z-index:4;display:flex;background:#fff;border-bottom:1px solid var(--line)}
-.spec-tabs button{flex:1;padding:12px 4px;border:none;background:none;font-weight:700;font-size:13px;color:var(--ink-soft);cursor:pointer;border-bottom:2px solid transparent}
-.spec-tabs button.on{color:var(--coral);border-bottom-color:var(--coral)}
+.spec-tabs{position:sticky;top:52px;z-index:4;display:flex;gap:6px;background:#fff;border-bottom:1px solid var(--line);padding:8px 10px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.spec-tabs::-webkit-scrollbar{display:none}
+.spec-tabs button{flex:none;padding:8px 12px;border:1.5px solid var(--line);border-radius:99px;background:#fff;font-weight:700;font-size:12.5px;color:var(--ink-soft);cursor:pointer;white-space:nowrap}
+.spec-tabs button.on{color:#fff}
+.spec-progress{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);font-size:10.5px}
+.sp-step{padding:4px 9px;border-radius:99px;font-weight:800;background:#F1EEE7;color:#9a927f;white-space:nowrap}
+.sp-step.done{background:#E2F0E6;color:#16A34A}
+.sp-step.active{background:var(--ink);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+.sp-arrow{color:#c9c0ae;font-weight:900}
+.spec-phase-head{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-left-width:5px;border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.spec-phase-head .spe{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:18px;flex:none}
+.spec-phase-head h3{margin:0;font-size:16px;font-weight:800}
+.spec-phase-head p{margin:2px 0 0;font-size:11.5px;color:var(--ink-soft)}
+.spec-matches-wrap{margin-bottom:8px}
+.spec-tbl.mini th,.spec-tbl.mini td{padding:4px 5px;font-size:11.5px}
+.spec-qual h4{margin:0 0 8px;font-size:13px}
+.spec-qual .chips{display:flex;flex-wrap:wrap;gap:6px}
+.spec-qual .chip{background:var(--sand-2);border:1px solid var(--line);border-radius:99px;padding:4px 11px;font-size:12px;font-weight:600}
 .spec-body{padding:14px}
 .spec-body .card{padding:12px}
 .spec-sec{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-soft);font-weight:800;margin:18px 2px 8px}
@@ -420,11 +445,11 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 "use strict";
 /* ===================== ÉTAT ===================== */
 const DEFAULT=()=>({
-  config:{name:"Tournoi Cap Homard",poolSizeTarget:5,qualifPerPool:3,points:21,rankMode:"wins",courts:5,courtNames:["Terrain 1","Terrain 2","Terrain 3","Terrain 4","Terrain 5"],centralIndex:-1,demoTeams:40,playerEntry:false},
-  teams:[], qualif:{pools:null}, haute:{pools:null}, basse:{pools:null}, finals:{haute:null,basse:null}
+  config:{name:"Tournoi Cap Homard",poolSizeTarget:5,qualifPerPool:3,points:21,winBy:"sec",rankMode:"wins",courts:5,courtNames:["Terrain 1","Terrain 2","Terrain 3","Terrain 4","Terrain 5"],centralIndex:-1,demoTeams:40,playerEntry:false},
+  teams:[], qualif:{pools:null}, haute:{pools:null}, basse:{pools:null}, finals:{haute:null,basse:null}, superconso:null, challenge:null
 });
 let DB={tournaments:[]};
-let currentId=null, route="config", finalTab="haute", editId=null, renameId=null;
+let currentId=null, route="config", finalTab="haute", editId=null, renameId=null, extraAssist=null;
 let S=DEFAULT(); // référence vivante vers le tournoi ouvert
 const LOCAL_KEY="capHomardDB"; // cache local unique (connexion globale, pas de multi-utilisateurs)
 function cur(){return DB.tournaments.find(t=>t.id===currentId);}
@@ -876,23 +901,58 @@ function buildAfternoonPools(recs,sizes,co){
 }
 function rankAllFromPools(pools){
   const byPos={};
-  pools.forEach(p=>poolStandings(p).ordered.forEach((e,idx)=>{(byPos[idx]=byPos[idx]||[]).push({id:e.id,w:e.w,ckey:e.ckey,diff:e.diff,coeff:e.coeff});}));
+  pools.forEach((p,pi)=>poolStandings(p).ordered.forEach((e,idx)=>{(byPos[idx]=byPos[idx]||[]).push({id:e.id,poolIndex:pi,w:e.w,ckey:e.ckey,diff:e.diff,coeff:e.coeff});}));
   const out=[];
   Object.keys(byPos).map(Number).sort((a,b)=>a-b).forEach(pos=>byPos[pos].sort(crossCmp).forEach(x=>out.push(x)));
   return out;
 }
 function seedList(n){let a=[1,2];while(a.length<n){const m=a.length*2+1,b=[];a.forEach(x=>{b.push(x);b.push(m-x);});a=b;}return a;}
-function makeBracket(ranked){
+function makeBracket(ranked,maxSize){
   if(ranked.length<2)return null;
   let size=1;while(size*2<=ranked.length)size*=2;
-  const qual=ranked.slice(0,size).map((x,i)=>({id:x.id,seed:i+1}));
+  if(maxSize&&maxSize>=2&&maxSize<size)size=maxSize; // format des phases finales imposé (optionnel)
+  const qual=ranked.slice(0,size).map((x,i)=>({id:x.id,seed:i+1,poolIndex:x.poolIndex}));
   const order=seedList(size),r1=[];
   for(let k=0;k<size;k+=2)r1.push({a:qual[order[k]-1],b:qual[order[k+1]-1],sa:"",sb:""});
+  avoidRematches(r1); // évite les revanches de poule au 1er tour (sans changer les qualifiés)
   return {size,rounds:[r1],extra:{petite:{sa:"",sb:""}}};
+}
+/* Répare le 1er tour pour qu'aucune paire ne réunisse deux équipes de la même poule,
+   quand c'est mathématiquement possible. On échange des équipes entre matchs (les mêmes
+   équipes restent qualifiées) en touchant d'abord les seeds faibles → têtes de série préservées. */
+function samePoolPair(m){return !!(m.a&&m.b&&m.a.poolIndex!=null&&m.a.poolIndex===m.b.poolIndex);}
+function avoidRematches(r1){
+  for(let pass=0;pass<r1.length+2;pass++){
+    let changed=false;
+    for(let i=0;i<r1.length;i++){
+      if(!samePoolPair(r1[i]))continue;
+      let fixed=false;
+      // 1) tenter d'échanger le côté "b" avec le "b" d'un autre match
+      for(let j=0;j<r1.length&&!fixed;j++){
+        if(j===i)continue;
+        const bi=r1[i].b,bj=r1[j].b;
+        const okI=!(r1[i].a&&bj&&r1[i].a.poolIndex===bj.poolIndex);
+        const okJ=!(r1[j].a&&bi&&r1[j].a.poolIndex===bi.poolIndex);
+        if(okI&&okJ){r1[i].b=bj;r1[j].b=bi;fixed=true;changed=true;}
+      }
+      // 2) sinon tenter d'échanger le côté "a"
+      for(let j=0;j<r1.length&&!fixed;j++){
+        if(j===i)continue;
+        const ai=r1[i].a,aj=r1[j].a;
+        const okI=!(aj&&r1[i].b&&aj.poolIndex===r1[i].b.poolIndex);
+        const okJ=!(ai&&r1[j].b&&ai.poolIndex===r1[j].b.poolIndex);
+        if(okI&&okJ){r1[i].a=aj;r1[j].a=ai;fixed=true;changed=true;}
+      }
+      // sinon : revanche inévitable pour ce match, on la laisse
+    }
+    if(!changed)break;
+  }
+  return r1;
 }
 function bWin(m){if(m.sa===""||m.sb==="")return null;return +m.sa>+m.sb?m.a:m.b;}
 function bLose(m){if(m.sa===""||m.sb==="")return null;return +m.sa>+m.sb?m.b:m.a;}
 function same(x,y){return (x&&y&&x.id===y.id)||(!x&&!y);}
+function bracketOf(side){return (side==="superconso"||side==="challenge")?(S[side]&&S[side].bracket):(S.finals&&S.finals[side]);}
 function advance(br){
   let cur=br.rounds[0],ri=1;
   while(cur.length>1){const need=cur.length/2;
@@ -913,7 +973,44 @@ function afternoonCourt(phase,idx){const H=S.haute.pools?S.haute.pools.length:0;
 function fmtCoeff(c){if(c===Infinity)return "Max";if(c===0)return "—";return c.toFixed(2);}
 function esc(s){return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
-function randScore(){const p=S.config.points;const l=5+Math.floor(Math.random()*(p-6));return Math.random()<.5?[p,Math.min(l,p-1)]:[Math.min(l,p-1),p];}
+/* ===================== FORMAT DE SCORE (points + règle de victoire) =====================
+   config.points ∈ {15,21,25} ; config.winBy ∈ {"sec","ecart2"}.
+   Défaut historique : "sec" (aucune contrainte d'écart) → comportement inchangé.
+   IMPORTANT : le vainqueur reste « celui qui a le plus de points » (teamStats intact).
+   La règle sert à la génération démo, aux libellés, aux feuilles, au Live et à une
+   aide visuelle NON bloquante à la saisie.                                              */
+function fmtPoints(){return (S&&S.config&&S.config.points)||21;}
+function fmtWinBy(){return (S&&S.config&&S.config.winBy)||"sec";}
+// Format éventuellement différent pour l'après-midi (phases autres que qualif), si défini.
+function phaseFormat(phase){
+  const af=S&&S.config&&S.config.afternoonFormat;
+  if(af&&phase&&phase!=="qualif")return {points:af.points||21,winBy:af.winBy||"sec"};
+  return {points:fmtPoints(),winBy:fmtWinBy()};
+}
+function formatLabelFor(phase){const f=phaseFormat(phase);return formatLabel(f.points,f.winBy);}
+function winByLabel(w){w=w||fmtWinBy();return w==="ecart2"?"2 points d'écart":"score sec";}
+function formatLabel(p,w){p=p||fmtPoints();w=w||fmtWinBy();return `${p} points · ${winByLabel(w)}`;}
+/* Cohérence d'un score fini avec la règle (indicatif, jamais bloquant).
+   Renvoie true si le score est plausible pour le format, false s'il paraît incohérent. */
+function scoreConform(a,b,p,w){
+  a=+a;b=+b;p=p||fmtPoints();w=w||fmtWinBy();
+  if(a===b)return false;                       // pas d'égalité possible sur un match fini
+  const hi=Math.max(a,b),lo=Math.min(a,b);
+  if(w==="ecart2")return hi>=p && (hi-lo)>=2;   // atteindre p ET 2 pts d'écart
+  return hi===p && lo<p;                        // score sec : le vainqueur s'arrête à p
+}
+function randScore(){
+  const p=fmtPoints(), w=fmtWinBy();
+  if(w==="ecart2"){
+    // parfois au-delà de p pour respecter l'écart de 2 (ex 23-21, 26-24)
+    const extra=Math.random()<.25?Math.floor(Math.random()*4):0;
+    const win=p+extra, lose=win-2-(extra?0:Math.floor(Math.random()*(p-2)));
+    const l=Math.max(0,Math.min(lose,win-2));
+    return Math.random()<.5?[win,l]:[l,win];
+  }
+  const l=Math.floor(Math.random()*p); // score sec : perdant entre 0 et p-1
+  return Math.random()<.5?[p,l]:[l,p];
+}
 /* --- terrains personnalisés --- */
 function ensureCourts(){const c=S.config;const n=Math.max(1,c.courts||1);if(!Array.isArray(c.courtNames))c.courtNames=[];
   if(c.courtNames.length<n){for(let i=c.courtNames.length;i<n;i++)c.courtNames.push("Terrain "+(i+1));}
@@ -1074,7 +1171,7 @@ function resetFrom(stage){ // 'draw'|'split'|'finals'
   const o=["draw","split","finals"], i=o.indexOf(stage);
   if(i<=0)S.qualif.pools=null;
   if(i<=1){S.haute.pools=null;S.basse.pools=null;}
-  S.finals={haute:null,basse:null};
+  S.finals={haute:null,basse:null}; S.superconso=null; S.challenge=null;
 }
 
 /* ===================== 1. RÉGLAGES ===================== */
@@ -1093,10 +1190,15 @@ function pageConfig(){
       <div><label class="fld">Équipes pour le tournoi de démo</label><input type="number" min="6" max="200" value="${c.demoTeams}" onchange="S.config.demoTeams=Math.max(6,Math.min(200,parseInt(this.value)||40))"></div>
     </div>
     <div class="row" style="margin-top:18px">
-      <div><label class="fld">Format des matchs</label>
-        <div class="seg"><button class="${c.points===21?'on':''}" onclick="S.config.points=21;render()">21 points</button><button class="${c.points===25?'on':''}" onclick="S.config.points=25;render()">25 points</button></div></div>
+      <div><label class="fld">Nombre de points</label>
+        <div class="seg"><button class="${c.points===15?'on':''}" onclick="S.config.points=15;render()">15</button><button class="${c.points===21?'on':''}" onclick="S.config.points=21;render()">21</button><button class="${c.points===25?'on':''}" onclick="S.config.points=25;render()">25</button></div></div>
+      <div><label class="fld">Règle de victoire</label>
+        <div class="seg"><button class="${fmtWinBy()==='sec'?'on':''}" onclick="S.config.winBy='sec';render()">Score sec</button><button class="${fmtWinBy()==='ecart2'?'on':''}" onclick="S.config.winBy='ecart2';render()">2 pts d'écart</button></div></div>
+    </div>
+    <div class="row" style="margin-top:18px">
       <div><label class="fld">Critère de classement des poules</label>
         <div class="seg"><button class="${(c.rankMode||'wins')==='wins'?'on':''}" onclick="S.config.rankMode='wins';resetFrom('split');render()">Victoires d'abord</button><button class="${c.rankMode==='coeff'?'on':''}" onclick="S.config.rankMode='coeff';resetFrom('split');render()">Coefficient d'abord</button></div></div>
+      <div><label class="fld">Format actuel</label><div class="fmt-pill">🏐 ${formatLabel()}</div></div>
     </div>
     <p class="muted tiny" style="margin:8px 0 0">${(c.rankMode||'wins')==='wins'?`<b>Victoires d'abord</b> (recommandé) : on classe d'abord au nombre de victoires, puis au coefficient (points pour ÷ contre), puis à la différence de points, puis à la <b>confrontation directe</b>.`:`<b>Coefficient d'abord</b> : on classe d'abord au coefficient, puis aux victoires. ⚠️ Une équipe avec moins de victoires peut alors être classée devant une équipe en ayant plus.`}</p>
     <div class="row" style="margin-top:14px">
@@ -1249,7 +1351,7 @@ function pageCourts(){
 function poolCard(phase,idx,L,sea){
   const store=phaseStore(phase),pool=store.pools[idx],st=poolStandings(pool);
   const qpp=S.config.qualifPerPool;
-  const courtInfo=phase==="qualif"?poolCourt(idx):afternoonCourt(phase,idx);
+  const courtInfo=phase==="qualif"?poolCourt(idx):(phase==="haute"||phase==="basse")?afternoonCourt(phase,idx):poolCourt(idx);
   const rows=pool.matches.map((m,mi)=>{
     const id1=pool.teams[m.i],id2=pool.teams[m.j],ref=m.ref>=0?pool.teams[m.ref]:null;
     const s=pool.scores[mi]||["",""];
@@ -1257,22 +1359,166 @@ function poolCard(phase,idx,L,sea){
     const dA=(kA in draft),dB=(kB in draft);
     const vA=dA?draft[kA]:s[0],vB=dB?draft[kB]:s[1];
     const w1=vA!==""&&vB!==""&&+vA>+vB,w2=vA!==""&&vB!==""&&+vB>+vA;
+    const filled=vA!==""&&vB!==""&&vA!=null&&vB!=null;
+    const pf=phaseFormat(phase);
+    const bad=filled&&!scoreConform(vA,vB,pf.points,pf.winBy);
     return `<div class="match"><span class="mno">${mi+1}</span>
       <span class="nm1 ${w1?'win':''}" title="${esc(teamName(id1))}">${esc(teamName(id1))}</span>
       <input type="number" min="0" inputmode="numeric" class="${dA?'dirty':''}" value="${vA}" onchange="draftPool('${phase}',${idx},${mi},0,this)">
       <span class="vs">—</span>
       <input type="number" min="0" inputmode="numeric" class="${dB?'dirty':''}" value="${vB}" onchange="draftPool('${phase}',${idx},${mi},1,this)">
       <span class="nm2 ${w2?'win':''}" title="${esc(teamName(id2))}">${esc(teamName(id2))}</span></div>
-      <div class="ref">${ref?`arbitre : <b>${esc(teamName(ref))}</b>`:'&nbsp;'}</div>`;
+      <div class="ref">${ref?`arbitre : <b>${esc(teamName(ref))}</b>`:'&nbsp;'}${bad?` <span class="score-warn" title="Score inhabituel pour le format ${esc(formatLabelFor(phase))}">⚠ score inhabituel</span>`:''}</div>`;
   }).join("");
   const tbl=`<table class="standtbl"><thead><tr><th></th><th style="text-align:left">Équipe</th><th>V</th><th>Pour</th><th>Con</th><th>Coeff</th></tr></thead><tbody>${st.ordered.map((x)=>{
     const up = phase==="qualif" && x.rank>0 && x.rank<=qpp;
     return `<tr class="${x.rank===1?'r1':''} ${up&&x.rank!==1?'q':''} ${up?'qd':''}"><td><span class="rk">${x.rank||'-'}</span></td><td class="nm">${esc(teamName(x.id))}</td><td>${x.w}</td><td>${x.pf}</td><td>${x.pc}</td><td style="font-weight:700">${fmtCoeff(x.coeff)}</td></tr>`;
   }).join("")}</tbody></table>`;
-  return `<div class="pool"><div class="pool-h ${sea?'sea':''}"><div class="t"><span class="badge">${L}</span>Poule ${L}</div>${courtInfo?`<span class="court-tag" title="${esc(courtName(courtInfo.court-1))}">${esc(courtName(courtInfo.court-1))}${courtInfo.rotation>1?'·r'+courtInfo.rotation:''}</span>`:(st.complete?'<span class="court-tag">fini</span>':'')}</div>
+  return `<div class="pool"><div class="pool-h ${sea?'sea':''}"><div class="t"><span class="badge">${L}</span>Poule ${L}</div><div class="ph-right">${courtInfo?`<span class="court-tag" title="${esc(courtName(courtInfo.court-1))}">${esc(courtName(courtInfo.court-1))}${courtInfo.rotation>1?'·r'+courtInfo.rotation:''}</span>`:(st.complete?'<span class="court-tag">fini</span>':'')}<button class="print-btn" title="Imprimer cette poule" onclick="printPool('${phase}',${idx})">🖨️</button></div></div>
    <div class="pool-body">${rows}<div style="height:4px"></div>${tbl}</div></div>`;
 }
-function phaseStore(phase){return phase==="qualif"?S.qualif:phase==="haute"?S.haute:S.basse;}
+function phaseStore(phase){return phase==="qualif"?S.qualif:phase==="haute"?S.haute:phase==="basse"?S.basse:phase==="superconso"?S.superconso:phase==="challenge"?S.challenge:null;}
+
+/* ===================== IMPRESSION (feuilles de poules — calquées sur le modèle papier) =====================
+   Génère une feuille A4 verticale par poule : équipes, matchs dans l'ordre, arbitre,
+   cases de score, vainqueur, score, classement. N'affecte aucune logique du tournoi. */
+function poolLabelFor(phase,idx){return phase==="qualif"?plabel(idx):phase==="haute"?"H"+(idx+1):phase==="basse"?"C"+(idx+1):phase==="superconso"?"SC"+(idx+1):phase==="challenge"?"CH"+(idx+1):(idx+1);}
+function scoreCells(maxN){let s="";for(let i=1;i<=maxN;i++)s+=`<span class="sc">${i}</span>`;return s;}
+function poolSheetHTML(phase,idx){
+  const store=phaseStore(phase); if(!store||!store.pools||!store.pools[idx])return "";
+  const pool=store.pools[idx];
+  const L=poolLabelFor(phase,idx);
+  const court=phase==="qualif"?poolCourt(idx):(phase==="haute"||phase==="basse")?afternoonCourt(phase,idx):poolCourt(idx);
+  const courtLabel=court?courtName(court.court-1)+(court.rotation>1?" · rotation "+court.rotation:""):"";
+  const N=pool.teams.length;
+  const maxN=Math.max(25,fmtPoints()+6);
+  const letter=k=>String.fromCharCode(65+k);
+  const teamLines=pool.teams.map((id,k)=>`<div class="tl"><span class="tlt">${letter(k)}</span><span class="tln">${esc(teamName(id))}</span></div>`).join("");
+  const rankLines=pool.teams.map((_,k)=>`<div class="rl"><span class="rlp">${k+1}<sup>${k===0?'er':'e'}</sup> :</span><span class="rll"></span></div>`).join("");
+  const matchs=pool.matches.map((m,mi)=>{
+    const li=letter(m.i),lj=letter(m.j),lref=m.ref>=0?letter(m.ref):"—";
+    return `<div class="mblock">
+      <div class="mhead"><div class="mtag"><span>MATCH</span><b>${mi+1}</b></div><div class="mtitle">${li} contre ${lj}</div><div class="marb">ARBITRE : ${lref}</div></div>
+      <div class="mbody">
+        <div class="srow"><span class="steam">${li}</span><span class="colon">:</span><span class="scells">${scoreCells(maxN)}</span></div>
+        <div class="svs"><i>contre</i><span class="dots"></span></div>
+        <div class="srow"><span class="steam">${lj}</span><span class="colon">:</span><span class="scells">${scoreCells(maxN)}</span></div>
+        <div class="mfoot"><span class="mf"><b>VAINQUEUR :</b><span class="fl"></span></span><span class="mf"><b>SCORE :</b><span class="fl short"></span></span></div>
+      </div>
+    </div>`;
+  }).join("");
+  return `<section class="sheet">
+    <div class="shead"><span class="neq">${N} ÉQUIPES</span><h1 class="stitle">POULE ${esc(L)}</h1></div>
+    <div class="stop">
+      <div class="teams">${teamLines}</div>
+      <div class="ranks">${rankLines}</div>
+    </div>
+    <div class="smeta">${esc(S.config.name||"Tournoi")}${courtLabel?" — "+esc(courtLabel):""} — ${esc(formatLabelFor(phase))}</div>
+    <div class="matches">${matchs}</div>
+  </section>`;
+}
+const PRINT_CSS=`
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0}
+.sheet{padding:6mm 4mm}
+.pagebreak{page-break-after:always}
+.shead{display:flex;align-items:center;gap:14px;border-bottom:3px solid #111;padding-bottom:6px;margin-bottom:10px}
+.neq{background:#111;color:#fff;font-weight:800;font-size:12px;letter-spacing:1px;padding:5px 12px;border-radius:3px;white-space:nowrap}
+.stitle{font-size:34px;font-weight:900;letter-spacing:2px;margin:0;flex:1;text-align:center}
+.stop{display:flex;gap:18px;margin-bottom:8px}
+.teams{flex:1.3;display:flex;flex-direction:column;border:2px solid #111}
+.tl{display:flex;align-items:center;border-bottom:1px solid #111;min-height:34px}
+.tl:last-child{border-bottom:none}
+.tlt{background:#111;color:#fff;font-weight:900;font-size:18px;width:34px;text-align:center;align-self:stretch;display:flex;align-items:center;justify-content:center}
+.tln{padding:4px 10px;font-size:15px;font-weight:700}
+.ranks{flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.rl{display:flex;align-items:baseline;gap:8px}
+.rlp{font-weight:800;font-size:15px;white-space:nowrap}
+.rll{flex:1;border-bottom:1.5px solid #111;height:16px}
+.smeta{font-size:10.5px;color:#333;text-align:center;margin-bottom:8px;font-style:italic}
+.mblock{border:2px solid #111;margin-bottom:7px;break-inside:avoid}
+.mhead{display:flex;align-items:stretch;border-bottom:2px solid #111}
+.mtag{background:#111;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 12px;min-width:64px}
+.mtag span{font-size:8.5px;letter-spacing:1px;font-weight:700}
+.mtag b{font-size:20px;line-height:1}
+.mtitle{font-size:19px;font-weight:800;padding:6px 12px;flex:1;display:flex;align-items:center}
+.marb{font-size:13px;font-weight:800;padding:6px 12px;display:flex;align-items:center}
+.mbody{padding:6px 10px}
+.srow{display:flex;align-items:flex-start;gap:6px;margin:2px 0}
+.steam{background:#111;color:#fff;font-weight:900;font-size:13px;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex:none}
+.colon{font-weight:800;padding-top:2px}
+.scells{display:flex;flex-wrap:wrap;gap:2px 6px}
+.sc{font-size:11px;font-weight:600;min-width:15px;text-align:center}
+.svs{display:flex;align-items:center;gap:8px;margin:3px 0 3px 28px}
+.svs i{font-size:11px}
+.dots{flex:1;border-bottom:1.5px dotted #111;height:12px}
+.mfoot{display:flex;justify-content:space-between;gap:16px;border-top:1px solid #999;margin-top:6px;padding-top:6px}
+.mf{display:flex;align-items:baseline;gap:8px;font-size:13px;flex:1}
+.mf .fl{flex:1;border-bottom:1.5px solid #111;height:16px}
+.mf .fl.short{min-width:90px}
+@media screen{body{background:#eee}.sheet{background:#fff;max-width:210mm;margin:10px auto;box-shadow:0 2px 12px rgba(0,0,0,.2)}.sheet.land{max-width:297mm}.noprint{position:fixed;top:10px;right:10px}}
+.bkhead{display:flex;align-items:center;gap:14px;border-bottom:3px solid #111;padding-bottom:6px;margin-bottom:12px}
+.bkfmt{font-size:11px;font-style:italic;color:#333;white-space:nowrap}
+.brackets{display:flex;gap:14px;align-items:flex-start}
+.bcol{flex:1;min-width:120px}
+.bcol h3{font-size:12px;text-transform:uppercase;letter-spacing:1px;background:#111;color:#fff;padding:4px 8px;margin:0 0 8px;text-align:center;border-radius:3px}
+.bcol.petite h3{background:#555}
+.bpm{display:flex;align-items:center;gap:5px;margin-bottom:12px;break-inside:avoid}
+.bpm-no{font-size:9px;font-weight:800;color:#999;width:12px;flex:none}
+.bpm-body{flex:1;border:1.5px solid #111}
+.bslot{display:flex;align-items:center;justify-content:space-between;min-height:24px;padding:2px 6px}
+.bslot:first-child{border-bottom:1px solid #111}
+.bsn{font-size:12px;font-weight:700}
+.bsc{width:26px;text-align:center;font-weight:800;border-left:1px dotted #999;padding-left:4px;margin-left:4px}
+@media print{.noprint{display:none}}
+`;
+function printDoc(inner,title,landscape){
+  const w=window.open("","_blank");
+  if(!w){toast("Autorise les fenêtres pop-up pour imprimer");return;}
+  const page=landscape?"@page{size:A4 landscape;margin:8mm}":"@page{size:A4 portrait;margin:8mm}";
+  w.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${PRINT_CSS}${page}</style></head><body><button class="noprint" onclick="window.print()">🖨️ Imprimer</button>${inner}<script>window.onload=function(){setTimeout(function(){try{window.print();}catch(e){}},250);};<\/script></body></html>`);
+  w.document.close();
+}
+function printPools(list,title){
+  if(!list.length){toast("Aucune poule à imprimer");return;}
+  const pages=list.map(([ph,ix])=>poolSheetHTML(ph,ix)).filter(Boolean).join('<div class="pagebreak"></div>');
+  printDoc(pages,title,false);
+}
+function printPool(phase,idx){printPools([[phase,idx]],"Feuille de poule");}
+function printAllPools(phase){const store=phaseStore(phase);if(!store||!store.pools)return;printPools(store.pools.map((_,i)=>[phase,i]),"Feuilles de poules");}
+function printAllPoolsHB(){const list=[];(S.haute.pools||[]).forEach((_,i)=>list.push(["haute",i]));(S.basse.pools||[]).forEach((_,i)=>list.push(["basse",i]));printPools(list,"Poules Hautes & Basses");}
+
+/* Impression des tableaux à élimination directe (A4 paysage), calé sur le format du tournoi. */
+function bracketSheetHTML(side,title){
+  const br=bracketOf(side);
+  if(!br||br.size<2)return "";
+  advance(br);
+  const total=br.rounds.length;
+  const slot=(t,sc)=>`<div class="bslot"><span class="bsn">${t?esc(teamName(t.id)):""}</span><span class="bsc">${sc!==""&&sc!=null?esc(sc):""}</span></div>`;
+  const cols=br.rounds.map((rd,ri)=>{
+    const remaining=total-ri;
+    const matches=rd.map((m,mi)=>`<div class="bpm"><span class="bpm-no">${mi+1}</span><div class="bpm-body">${slot(m.a,m.sa)}${slot(m.b,m.sb)}</div></div>`).join("");
+    return `<div class="bcol"><h3>${roundName(remaining)}</h3>${matches}</div>`;
+  }).join("");
+  let petite="";
+  const pm=br.extra&&br.extra.petite;
+  if(total>=2&&pm)petite=`<div class="bcol petite"><h3>Petite finale (3e place)</h3><div class="bpm"><div class="bpm-body">${slot(pm.a,pm.sa)}${slot(pm.b,pm.sb)}</div></div></div>`;
+  return `<section class="sheet land">
+    <div class="bkhead"><span class="neq">${esc(title)}</span><h1 class="stitle">${esc(S.config.name||"Tournoi")}</h1><span class="bkfmt">${esc(formatLabel())}</span></div>
+    <div class="brackets">${cols}${petite}</div>
+  </section>`;
+}
+function printBracket(side){
+  const title=side==="haute"?"TABLEAU PRINCIPAL":"TABLEAU CONSOLANTE";
+  const h=bracketSheetHTML(side,title);
+  if(!h){toast("Ce tableau n'est pas encore disponible");return;}
+  printDoc(h,title,true);
+}
+function printAllBrackets(){
+  const pages=[["haute","TABLEAU PRINCIPAL"],["basse","TABLEAU CONSOLANTE"]].map(([s,t])=>bracketSheetHTML(s,t)).filter(Boolean);
+  if(!pages.length){toast("Aucun tableau disponible");return;}
+  printDoc(pages.join('<div class="pagebreak"></div>'),"Tableaux finaux",true);
+}
 function togglePlayerEntry(on){ S.config.playerEntry=!!on; persist(); render(); toast(on?"Saisie joueurs activée":"Saisie joueurs désactivée"); }
 function setScore(phase,idx,mi,side,val){
   const pool=phaseStore(phase).pools[idx];
@@ -1307,7 +1553,7 @@ function commitScores(){
       if(phase==="qualif")touchedQualif=true; else touchedAfternoon=true;
     } else if(p[0]==="B"){
       const side=p[1],ri=p[2],mi=+p[3],which=p[4];
-      const br=S.finals[side]; if(!br)return;
+      const br=bracketOf(side); if(!br)return;
       const m=ri==="P"?(br.extra&&br.extra.petite):(br.rounds[+ri]&&br.rounds[+ri][mi]);
       if(m) m[which]= val===""?"":(+val); // écriture identique à setBracket
     }
@@ -1323,32 +1569,85 @@ function pagePools(){
   if(!S.qualif.pools)return head("Étape 4","Poules de qualification","")+emptyState("▦","Pas encore de poules","Lance d'abord le tirage.",`<button class="btn primary" style="margin-top:14px" onclick="go('draw')">Aller au tirage</button>`);
   let done=S.qualif.pools.filter(p=>poolStandings(p).complete).length;
   const tot=S.qualif.pools.length;
-  return head("Étape 4","Poules de qualification",`Round-robin : chaque équipe affronte toutes les autres de sa poule. Matchs en ${S.config.points} points. Classement automatique au coefficient. Les ${S.config.qualifPerPool} premiers (surlignés) montent en Tableau Haut.`)+
+  return head("Étape 4","Poules de qualification",`Round-robin : chaque équipe affronte toutes les autres de sa poule. Matchs en ${formatLabel()}. Classement automatique au coefficient. Les ${S.config.qualifPerPool} premiers (surlignés) montent en Tableau Haut.`)+
    journalQualif()+
-   `<div class="spread" style="margin-bottom:16px"><span class="pill ${done===tot?'ok':''}">${done}/${tot} poules terminées</span><button class="btn sm" onclick="go('split')">Qualification H/B →</button></div>
+   `<div class="spread" style="margin-bottom:16px"><span class="pill ${done===tot?'ok':''}">${done}/${tot} poules terminées</span><div class="row"><button class="btn sm" onclick="printAllPools('qualif')">🖨️ Imprimer les poules</button><button class="btn sm" onclick="go('split')">Qualification H/B →</button></div></div>
     <div class="pool-grid">${S.qualif.pools.map((p,idx)=>poolCard("qualif",idx,plabel(idx),false)).join("")}</div>`+saveBar();
 }
 
 /* ===================== 6. QUALIFICATION H/B ===================== */
 function qualifComplete(){return S.qualif.pools&&S.qualif.pools.every(p=>poolStandings(p).complete);}
-function buildHB(){
+// Séparation Haut/Bas déterminée UNIQUEMENT par le matin (identique quelle que soit la reconfig).
+function computeHBSplit(){
   const qpp=S.config.qualifPerPool;let haut=[],cons=[];
   S.qualif.pools.forEach(p=>poolStandings(p).ordered.forEach((e,idx)=>{
     const r={id:e.id,w:e.w,ckey:e.ckey,diff:e.diff,coeff:e.coeff===Infinity?1e9:e.coeff,pos:idx+1};(idx<qpp?haut:cons).push(r);}));
-  cons.sort((a,b)=>a.pos-b.pos||crossCmp(a,b)); // repêchage : meilleur non-qualifié d'abord (rang puis classement canonique)
-  // repêchage minimal (Bas→Haut uniquement) pour que les deux tableaux tiennent en poules de 4/5
+  cons.sort((a,b)=>a.pos-b.pos||crossCmp(a,b)); // repêchage : meilleur non-qualifié d'abord
   let promo=0;
   for(let p=0;p<=cons.length;p++){const nb=haut.length+p,nc=cons.length-p;
     if(feasibleClean(nb)&&(nc===0||feasibleClean(nc))){promo=p;break;}}
-  const repsUp=cons.slice(0,promo), hautAll=haut.concat(repsUp), consRest=cons.slice(promo);
+  const repsUp=cons.slice(0,promo);
+  return {hautAll:haut.concat(repsUp),consRest:cons.slice(promo),promo,repsUp};
+}
+// Génère (ou régénère) les poules de l'après-midi. sizes optionnels = reconfiguration manuelle.
+function rebuildAfternoon(hauteSizes,basseSizes){
+  const {hautAll,consRest,promo,repsUp}=computeHBSplit();
   const co=morningCoPool();
-  const hRes=buildAfternoonPools(hautAll,bestSizes(hautAll.length),co);
-  const bRes=buildAfternoonPools(consRest,bestSizes(consRest.length),co);
+  const hRes=buildAfternoonPools(hautAll,hauteSizes||bestSizes(hautAll.length),co);
+  const bRes=buildAfternoonPools(consRest,basseSizes||bestSizes(consRest.length),co);
   S.haute.pools=hRes.poolIds.map(ids=>buildPool(ids));
   S.basse.pools=bRes.poolIds.map(ids=>buildPool(ids));
   S._repeche={count:promo,ids:repsUp.map(r=>r.id)};
   S._afternoon={haute:{reMatch:hRes.reMatch},basse:{reMatch:bRes.reMatch}};
+  S.finals={haute:null,basse:null}; S.superconso=null; S.challenge=null;
+}
+function buildHB(){
+  rebuildAfternoon(null,null); // répartition automatique (comportement historique)
   S.finals={haute:null,basse:null};
+}
+/* --- Reconfiguration de l'après-midi (n°3) : change la répartition/terrains/format
+   sans jamais toucher au matin ni aux équipes qualifiées Haut/Bas. --- */
+let splitAssist=false, splitCfg={};
+function openAfternoonReconfig(){splitAssist=true;splitCfg={};render();}
+function poolCountOptions(n){const out=[];const seen=new Set();for(let k=1;k<=Math.floor(n/3)&&k<=10;k++){const s=evenPartition(n,k);if(Math.max(...s)>6||Math.min(...s)<3)continue;const key=s.join("-");if(seen.has(key))continue;seen.add(key);out.push({k,sizes:s});}if(!out.length)out.push({k:1,sizes:[n]});return out;}
+function setSplitHaute(k){const{hautAll}=computeHBSplit();splitCfg.hauteSizes=k?evenPartition(hautAll.length,k):null;splitCfg.hauteK=k||"auto";render();}
+function setSplitBasse(k){const{consRest}=computeHBSplit();splitCfg.basseSizes=k?evenPartition(consRest.length,k):null;splitCfg.basseK=k||"auto";render();}
+function setSplitFinals(sz){splitCfg.finalsSize=sz;render();}
+function setSplitFormat(mode){ // 'matin' | 'p15sec' | 'p21sec' | 'p25e2' etc.
+  if(mode==="matin")splitCfg.afternoonFormat=null;
+  else{const[pt,wb]=mode.split("|");splitCfg.afternoonFormat={points:+pt,winBy:wb};}
+  splitCfg.fmtMode=mode;render();
+}
+function applyAfternoonReconfig(){
+  if(splitCfg.courts)S.config.courts=Math.max(1,Math.min(20,splitCfg.courts));
+  if(splitCfg.afternoonFormat!==undefined)S.config.afternoonFormat=splitCfg.afternoonFormat;
+  if(splitCfg.finalsSize!==undefined)S.config.finalsSize=splitCfg.finalsSize||null;
+  rebuildAfternoon(splitCfg.hauteSizes||null,splitCfg.basseSizes||null);
+  splitAssist=false;persist();render();toast("Après-midi reconfiguré — résultats du matin conservés");
+}
+function afternoonReconfigPanel(){
+  const{hautAll,consRest}=computeHBSplit();
+  const hOpts=poolCountOptions(hautAll.length),bOpts=poolCountOptions(consRest.length);
+  const curFmt=splitCfg.fmtMode||(S.config.afternoonFormat?`${S.config.afternoonFormat.points}|${S.config.afternoonFormat.winBy}`:"matin");
+  const curFinals=splitCfg.finalsSize!==undefined?splitCfg.finalsSize:(S.config.finalsSize||0);
+  const seg=(active,label,onclick)=>`<button class="btn sm ${active?'primary':''}" onclick="${onclick}">${label}</button>`;
+  const fmtOpts=[["matin","Comme le matin"],["15|sec","15 sec"],["15|ecart2","15 ·2é"],["21|sec","21 sec"],["21|ecart2","21 ·2é"],["25|sec","25 sec"],["25|ecart2","25 ·2é"]];
+  const finalsOpts=[[0,"Auto"],[16,"8es (16)"],[8,"Quarts (8)"],[4,"Demies (4)"],[2,"Finale (2)"]];
+  return `<div class="card" style="border-left:4px solid var(--sea)">
+    <div class="spread"><h3 class="sec" style="margin:0">⚙ Reconfigurer l'après-midi</h3><button class="btn sm" onclick="splitAssist=false;render()">Fermer</button></div>
+    <p class="muted tiny">Change la répartition, les terrains et le format <b>sans toucher aux résultats du matin</b>. Les équipes en Haut (${hautAll.length}) et en Bas (${consRest.length}) restent identiques.</p>
+    <h5 style="margin:12px 0 6px;color:var(--coral)">▲ Poules du Tableau Haut (${hautAll.length} équipes)</h5>
+    <div class="row" style="flex-wrap:wrap">${seg(!splitCfg.hauteK||splitCfg.hauteK==="auto","Auto","setSplitHaute(0)")}${hOpts.map(o=>seg(splitCfg.hauteK===o.k,`${o.k} (${o.sizes.join('/')})`,`setSplitHaute(${o.k})`)).join("")}</div>
+    <h5 style="margin:12px 0 6px;color:var(--sea)">▼ Poules du Tableau Bas (${consRest.length} équipes)</h5>
+    <div class="row" style="flex-wrap:wrap">${seg(!splitCfg.basseK||splitCfg.basseK==="auto","Auto","setSplitBasse(0)")}${bOpts.map(o=>seg(splitCfg.basseK===o.k,`${o.k} (${o.sizes.join('/')})`,`setSplitBasse(${o.k})`)).join("")}</div>
+    <h5 style="margin:12px 0 6px">🏐 Format des scores (après-midi)</h5>
+    <div class="row" style="flex-wrap:wrap">${fmtOpts.map(([v,l])=>seg(curFmt===v,l,`setSplitFormat('${v}')`)).join("")}</div>
+    <h5 style="margin:12px 0 6px">🏆 Format des phases finales</h5>
+    <div class="row" style="flex-wrap:wrap">${finalsOpts.map(([v,l])=>seg(curFinals===v,l,`setSplitFinals(${v})`)).join("")}</div>
+    <h5 style="margin:12px 0 6px">🏟️ Terrains</h5>
+    <input type="number" min="1" max="20" value="${splitCfg.courts||S.config.courts}" onchange="splitCfg.courts=parseInt(this.value)||${S.config.courts}" style="width:90px">
+    <div class="row" style="margin-top:16px"><button class="btn primary" onclick="applyAfternoonReconfig()">✓ Appliquer la reconfiguration</button></div>
+  </div>`;
 }
 function pageSplit(){
   if(!S.qualif.pools)return head("Étape 5","Qualification Haute / Basse","")+emptyState("⇅","Poules non créées","Fais le tirage et la saisie d'abord.","");
@@ -1362,7 +1661,7 @@ function pageSplit(){
     const list=(store,pfx,sea)=>store.pools.map((p,i)=>`<div class="pool"><div class="pool-h ${sea?'sea':''}"><div class="t"><span class="badge">${pfx}${i+1}</span>Poule ${pfx}${i+1}</div><span class="court-tag">${p.teams.length} éq.</span></div><div class="pool-body">${p.teams.map((id,pos)=>`<div class="team-chip" style="margin:6px 0"><span class="idx">${pos+1}</span><span class="nm">${esc(teamName(id))}</span></div>`).join("")}</div></div>`).join("");
     const hc=S.haute.pools.reduce((a,p)=>a+p.teams.length,0),bc=S.basse.pools.reduce((a,p)=>a+p.teams.length,0);
     const hsizes=S.haute.pools.map(p=>p.teams.length).join("/"), bsizes=S.basse.pools.map(p=>p.teams.length).join("/")||"—";
-    body=`${journalHB()}<div class="spread" style="margin-bottom:10px"><span class="muted tiny">Les ${S.config.qualifPerPool} premiers de chaque poule de qualif → <b>Tableau Haut</b> (${hc} éq.), le reste → <b>Tableau Bas / consolante</b> (${bc} éq.). Poules de 4 ou 5 uniquement.</span><button class="btn sm" onclick="if(confirm('Régénérer ? Le placement et les scores H/B seront refaits.'))buildHB()||render()">↻ Régénérer</button></div>
+    body=`${journalHB()}${splitAssist?afternoonReconfigPanel():''}<div class="spread" style="margin-bottom:10px"><span class="muted tiny">Les ${S.config.qualifPerPool} premiers de chaque poule de qualif → <b>Tableau Haut</b> (${hc} éq.), le reste → <b>Tableau Bas / consolante</b> (${bc} éq.).</span><div class="row"><button class="btn sm" onclick="openAfternoonReconfig()">⚙ Reconfigurer l'après-midi</button><button class="btn sm" onclick="if(confirm('Régénérer ? Le placement et les scores H/B seront refaits.'))buildHB()||render()">↻ Régénérer (auto)</button></div></div>
       <h3 class="sec" style="color:var(--coral)">▲ Tableau Haut — ${S.haute.pools.length} poules (${hsizes})</h3><div class="pool-grid">${list(S.haute,"H",false)}</div>
       <h3 class="sec" style="color:var(--sea);margin-top:26px">▼ Tableau Bas (consolante) — ${S.basse.pools.length} poules (${bsizes})</h3><div class="pool-grid">${list(S.basse,"C",true)}</div>
       <div class="card" style="margin-top:18px"><div class="spread"><span class="muted tiny">Place aux poules de l'après-midi.</span><button class="btn primary" onclick="go('hb')">Saisir les poules H & B →</button></div></div>`;
@@ -1375,16 +1674,79 @@ function pageHB(){
   if(!S.haute.pools)return head("Étape 6","Poules Hautes & Basses","")+emptyState("▥","Pas encore qualifiées","Génère d'abord la répartition H/B.",`<button class="btn primary" style="margin-top:14px" onclick="go('split')">Qualification H/B</button>`);
   return head("Étape 6","Poules Hautes & Basses",`Deuxième phase de qualification. Mêmes règles. Les mieux classés se qualifient pour les tableaux finaux.`)+
    journalHB()+
-   `<h3 class="sec" style="color:var(--coral)">▲ Tableau Haut</h3><div class="pool-grid">${S.haute.pools.map((p,idx)=>poolCard("haute",idx,"H"+(idx+1),false)).join("")}</div>
+   `<div class="spread" style="margin-bottom:14px"><span class="muted tiny">Poules de l'après-midi</span><button class="btn sm" onclick="printAllPoolsHB()">🖨️ Imprimer toutes les poules</button></div>
+    <h3 class="sec" style="color:var(--coral)">▲ Tableau Haut</h3><div class="pool-grid">${S.haute.pools.map((p,idx)=>poolCard("haute",idx,"H"+(idx+1),false)).join("")}</div>
     <h3 class="sec" style="color:var(--sea);margin-top:28px">▼ Tableau Bas (consolante)</h3><div class="pool-grid">${S.basse.pools.map((p,idx)=>poolCard("basse",idx,"C"+(idx+1),true)).join("")}</div>
     <div class="card" style="margin-top:18px"><div class="spread"><span class="muted tiny">Poules finies ? Place aux phases finales.</span><button class="btn primary" onclick="go('finals')">Phases finales →</button></div></div>`+saveBar();
 }
 
 /* ===================== 8. PHASES FINALES ===================== */
 function hbComplete(store){return store.pools&&store.pools.every(p=>poolStandings(p).complete);}
+
+/* ===================== SUPER CONSOLANTE & CHALLENGE (phases optionnelles) =====================
+   Créées à la demande à partir des équipes NON qualifiées pour un tableau final :
+     - Super Consolante  ← équipes non qualifiées du Tableau Principal (poules hautes)
+     - Challenge         ← équipes non qualifiées du Tableau Consolante (poules basses)
+   Deux modes : poules (round-robin, arbitres, classement) ou tableau direct (élimination).
+   100% optionnel : si l'organisateur ne les crée pas, le tournoi fonctionne comme avant. */
+const EXTRA_SRC={superconso:"haute",challenge:"basse"};
+function extraTitle(key){return key==="superconso"?"Super Consolante":"Challenge";}
+function extraTeamRecs(key){
+  const source=EXTRA_SRC[key];
+  const pools=source==="haute"?(S.haute&&S.haute.pools):(S.basse&&S.basse.pools);
+  const bracket=source==="haute"?(S.finals&&S.finals.haute):(S.finals&&S.finals.basse);
+  if(!pools||!bracket)return [];
+  const ex=explainQualification(pools,bracket); if(!ex)return [];
+  const outIds=ex.rows.filter(r=>!r.qualified).map(r=>r.id);
+  return outIds.map(id=>{
+    for(let pi=0;pi<pools.length;pi++){const o=poolStandings(pools[pi]).ordered;const k=o.findIndex(x=>x.id===id);
+      if(k>=0){const e=o[k];return {id,pos:k+1,coeff:e.coeff===Infinity?1e9:e.coeff,w:e.w,ckey:e.ckey,diff:e.diff,poolIndex:pi};}}
+    return {id,pos:9,coeff:0,w:0,ckey:0,diff:0,poolIndex:0};
+  });
+}
+// Propositions automatiques de répartition en poules (plusieurs formats plausibles).
+function extraPoolOptions(n){
+  const opts=[]; const seen=new Set();
+  for(let k=1;k<=Math.floor(n/2)&&k<=8;k++){
+    const s=evenPartition(n,k); const mx=Math.max(...s),mn=Math.min(...s);
+    if(mx>6||mn<3)continue;
+    const key=s.join("-"); if(seen.has(key))continue; seen.add(key);
+    opts.push({k,sizes:s});
+  }
+  if(!opts.length)opts.push({k:1,sizes:[n]});
+  return opts;
+}
+function createExtraPools(key,nbPools){
+  const recs=extraTeamRecs(key);
+  if(recs.length<3){toast("Il faut au moins 3 équipes");return;}
+  const sizes=nbPools?evenPartition(recs.length,nbPools):bestSizes(recs.length);
+  const co=morningCoPool();
+  const res=buildAfternoonPools(recs,sizes,co);
+  S[key]={source:EXTRA_SRC[key],mode:"pools",pools:res.poolIds.map(ids=>buildPool(ids)),bracket:null};
+  extraAssist=null; persist(); render(); toast(extraTitle(key)+" créée en poules");
+}
+function createExtraBracket(key){
+  const recs=extraTeamRecs(key);
+  if(recs.length<2){toast("Il faut au moins 2 équipes");return;}
+  const ranked=recs.map(r=>({id:r.id,poolIndex:r.poolIndex}));
+  S[key]={source:EXTRA_SRC[key],mode:"bracket",pools:null,bracket:makeBracket(ranked)};
+  extraAssist=null; persist(); render(); toast(extraTitle(key)+" créée en tableau");
+}
+// Depuis des poules extra terminées : générer le tableau final de la phase.
+function buildExtraFinals(key){
+  const d=S[key]; if(!d||!d.pools)return;
+  if(!d.pools.every(p=>poolStandings(p).complete)){toast("Termine d'abord les poules");return;}
+  d.bracket=makeBracket(rankAllFromPools(d.pools));
+  persist(); render(); toast("Tableau final "+extraTitle(key)+" généré");
+}
+function deleteExtra(key){
+  if(!confirm("Supprimer la "+extraTitle(key)+" ? Les scores de cette phase seront perdus."))return;
+  S[key]=null; extraAssist=null; persist(); render();
+}
 function ensureFinals(fill){
-  if(hbComplete(S.haute)&&!S.finals.haute)S.finals.haute=makeBracket(rankAllFromPools(S.haute.pools));
-  if(hbComplete(S.basse)&&!S.finals.basse)S.finals.basse=makeBracket(rankAllFromPools(S.basse.pools));
+  const fs=S.config&&S.config.finalsSize;
+  if(hbComplete(S.haute)&&!S.finals.haute)S.finals.haute=makeBracket(rankAllFromPools(S.haute.pools),fs);
+  if(hbComplete(S.basse)&&!S.finals.basse)S.finals.basse=makeBracket(rankAllFromPools(S.basse.pools),fs);
   if(fill){fillBracket(S.finals.haute);fillBracket(S.finals.basse);}
 }
 function fillBracket(br){
@@ -1405,8 +1767,8 @@ function pageFinals(){
   else body=renderBracket(finalTab)+(finalTab==="haute"?explainBlock(S.haute.pools,S.finals.haute,"H","Tableau principal","var(--coral)"):explainBlock(S.basse.pools,S.finals.basse,"C","Consolante","var(--sea)"));
   return head("Étape 7","Phases finales",`Tableaux à élimination directe générés automatiquement selon le nombre de qualifiés (4, 8, 16, 32…). Saisis les scores : les vainqueurs avancent seuls.`)+
     journalFinals()+
-    `<div class="bracket-tabs">${tab("haute","▲ Tableau principal","var(--coral)")}${tab("basse","▼ Consolante","var(--sea)")}</div>${body}`+
-    superConsolanteBlock()+saveBar();
+    `<div class="spread" style="margin-bottom:12px"><div class="bracket-tabs">${tab("haute","▲ Tableau principal","var(--coral)")}${tab("basse","▼ Consolante","var(--sea)")}</div><div class="row"><button class="btn sm" onclick="printBracket(finalTab)">🖨️ Ce tableau</button><button class="btn sm" onclick="printAllBrackets()">🖨️ Tous</button></div></div>${body}`+
+    superConsolanteBlock()+extraPhaseSection("superconso")+extraPhaseSection("challenge")+saveBar();
 }
 function courtBadge(matchSeq,isBig){
   const c=S.config;
@@ -1415,8 +1777,8 @@ function courtBadge(matchSeq,isBig){
   return `<span class="ct" title="${esc(courtName(i))}">${esc(courtName(i))}</span>`;
 }
 function renderBracket(side){
-  const br=S.finals[side];advance(br);
-  const total=br.rounds.length,consol=side==="basse"?"consol":"";
+  const br=bracketOf(side);advance(br);
+  const total=br.rounds.length,consol=(side==="basse"||side==="challenge")?"consol":"";
   let seq=0;
   const cols=br.rounds.map((rd,ri)=>{
     const remaining=total-ri,big=remaining<=2;
@@ -1430,7 +1792,8 @@ function renderBracket(side){
     petite=`<div class="round ${consol}"><h4>Petite finale (3e place)</h4>${bmatchHTML(side,"P",0,pm,false,courtBadge(seq++,true))}</div>`;
   }
   const champ=bWin(br.rounds[total-1][0]);
-  return `${champ?`<div class="card" style="margin-bottom:16px;background:#FBF6E6;border-color:#EBDFB8"><div class="row"><span style="font-size:24px">🏆</span><div><div class="eyebrow" style="color:var(--gold)">Vainqueur ${side==='haute'?'Tableau principal':'Consolante'}</div><div style="font-size:20px;font-weight:800">${esc(teamName(champ.id))}</div></div></div></div>`:""}
+  const vlabel={haute:"Tableau principal",basse:"Consolante",superconso:"Super Consolante",challenge:"Challenge"}[side]||"Tableau";
+  return `${champ?`<div class="card" style="margin-bottom:16px;background:#FBF6E6;border-color:#EBDFB8"><div class="row"><span style="font-size:24px">🏆</span><div><div class="eyebrow" style="color:var(--gold)">Vainqueur ${vlabel}</div><div style="font-size:20px;font-weight:800">${esc(teamName(champ.id))}</div></div></div></div>`:""}
    <div class="rounds">${cols}${petite}</div>`;
 }
 function bmatchHTML(side,ri,mi,m,editable,courtTag){
@@ -1443,7 +1806,7 @@ function bmatchHTML(side,ri,mi,m,editable,courtTag){
   return `<div class="bmatch">${courtTag}${teamRow(m.a,m.sa,"sa")}${teamRow(m.b,m.sb,"sb")}</div>`;
 }
 function setBracket(side,ri,mi,which,val){
-  const br=S.finals[side],m=ri==="P"?br.extra.petite:br.rounds[+ri][mi];
+  const br=bracketOf(side),m=ri==="P"?br.extra.petite:br.rounds[+ri][mi];
   m[which]=val===""?"":(+val);render();
 }
 
@@ -1502,13 +1865,19 @@ function encodeSnapshot(t){
   const st=t.state, ids=st.teams.map(x=>x.id), ix=new Map(ids.map((id,i)=>[id,i]));
   const packPool=p=>({t:p.teams.map(id=>ix.get(id)),s:p.scores.map(sc=>(sc&&sc[0]!==""&&sc[1]!=="")?[+sc[0],+sc[1]]:0)});
   const packBr=br=>{if(!br)return null;advance(br);return {z:br.size,r:br.rounds.map(rd=>rd.map(m=>[m.sa===""?-1:+m.sa,m.sb===""?-1:+m.sb])),p:[br.extra&&br.extra.petite&&br.extra.petite.sa!==""?+br.extra.petite.sa:-1,br.extra&&br.extra.petite&&br.extra.petite.sb!==""?+br.extra.petite.sb:-1]};};
+  const packXBr=br=>{if(!br)return null;advance(br);return {z:br.size,
+    t0:br.rounds[0].map(m=>[m.a?ix.get(m.a.id):-1,m.b?ix.get(m.b.id):-1,(m.a&&m.a.poolIndex!=null)?m.a.poolIndex:-1,(m.b&&m.b.poolIndex!=null)?m.b.poolIndex:-1]),
+    r:br.rounds.map(rd=>rd.map(m=>[m.sa===""?-1:+m.sa,m.sb===""?-1:+m.sb])),
+    p:[br.extra&&br.extra.petite&&br.extra.petite.sa!==""?+br.extra.petite.sa:-1,br.extra&&br.extra.petite&&br.extra.petite.sb!==""?+br.extra.petite.sb:-1]};};
+  const packX=x=>x?{m:x.mode,s:x.source,P:x.pools?x.pools.map(packPool):null,B:packXBr(x.bracket)}:null;
   const snap={v:1,n:t.name,d:t.date,l:t.location,
-    c:{pts:st.config.points,qpp:st.config.qualifPerPool,rm:st.config.rankMode||"wins",cn:st.config.courtNames,ci:st.config.centralIndex,cr:st.config.courts},
+    c:{pts:st.config.points,wb:st.config.winBy||"sec",af:st.config.afternoonFormat||null,fs:st.config.finalsSize||null,qpp:st.config.qualifPerPool,rm:st.config.rankMode||"wins",cn:st.config.courtNames,ci:st.config.centralIndex,cr:st.config.courts},
     T:st.teams.map(x=>x.name),
     Q:st.qualif&&st.qualif.pools?st.qualif.pools.map(packPool):null,
     H:st.haute&&st.haute.pools?st.haute.pools.map(packPool):null,
     B:st.basse&&st.basse.pools?st.basse.pools.map(packPool):null,
     FH:packBr(st.finals&&st.finals.haute),FB:packBr(st.finals&&st.finals.basse),
+    XS:packX(st.superconso),XC:packX(st.challenge),
     RP:st._repeche?st._repeche.ids.map(id=>ix.get(id)):[]};
   return LZString.compressToEncodedURIComponent(JSON.stringify(snap));
 }
@@ -1517,9 +1886,16 @@ function decodeSnapshot(str){
   const teams=o.T.map((name,i)=>({id:String(i),name,seed:false}));
   const unpackPool=pp=>{const ids=pp.t.map(i=>String(i));const pool=buildPool(ids);
     pool.scores=pool.matches.map((m,k)=>{const s=pp.s[k];return (s&&s.length===2)?[s[0],s[1]]:["",""];});return pool;};
-  const state={config:{name:o.n,points:o.c.pts,qualifPerPool:o.c.qqp||o.c.qpp,rankMode:o.c.rm,courtNames:o.c.cn||[],centralIndex:o.c.ci==null?-1:o.c.ci,courts:o.c.cr||1,poolSizeTarget:5,demoTeams:40},
-    teams, qualif:{pools:o.Q?o.Q.map(unpackPool):null}, haute:{pools:o.H?o.H.map(unpackPool):null}, basse:{pools:o.B?o.B.map(unpackPool):null}, finals:{haute:null,basse:null},
+  const state={config:{name:o.n,points:o.c.pts,winBy:o.c.wb||"sec",afternoonFormat:o.c.af||null,finalsSize:o.c.fs||null,qualifPerPool:o.c.qqp||o.c.qpp,rankMode:o.c.rm,courtNames:o.c.cn||[],centralIndex:o.c.ci==null?-1:o.c.ci,courts:o.c.cr||1,poolSizeTarget:5,demoTeams:40},
+    teams, qualif:{pools:o.Q?o.Q.map(unpackPool):null}, haute:{pools:o.H?o.H.map(unpackPool):null}, basse:{pools:o.B?o.B.map(unpackPool):null}, finals:{haute:null,basse:null}, superconso:null, challenge:null,
     _repeche:{count:(o.RP||[]).length,ids:(o.RP||[]).map(i=>String(i))}};
+  const unpackXBr=px=>{if(!px)return null;
+    const r0=px.t0.map(([ia,ib,pa,pb])=>({a:ia>=0?{id:String(ia),seed:false,poolIndex:pa<0?null:pa}:null,b:ib>=0?{id:String(ib),seed:false,poolIndex:pb<0?null:pb}:null,sa:"",sb:""}));
+    const br={size:px.z,rounds:[r0],extra:{petite:{sa:"",sb:""}}};advance(br);
+    (px.r||[]).forEach((rd,ri)=>{if(br.rounds[ri])rd.forEach((sc,mi)=>{if(br.rounds[ri][mi]){br.rounds[ri][mi].sa=sc[0]<0?"":sc[0];br.rounds[ri][mi].sb=sc[1]<0?"":sc[1];}});advance(br);});
+    if(px.p&&br.extra&&br.extra.petite){br.extra.petite.sa=px.p[0]<0?"":px.p[0];br.extra.petite.sb=px.p[1]<0?"":px.p[1];}return br;};
+  const unpackX=x=>x?{mode:x.m,source:x.s,pools:x.P?x.P.map(unpackPool):null,bracket:unpackXBr(x.B)}:null;
+  state.superconso=unpackX(o.XS);state.challenge=unpackX(o.XC);
   const prevS=S;S=state; // contexte pour reconstruire les tableaux (classement)
   const rebuildBr=(packed,pools)=>{if(!packed||!pools)return null;const br=makeBracket(rankAllFromPools(pools));if(!br)return null;advance(br);
     (packed.r||[]).forEach((rd,ri)=>{if(br.rounds[ri])rd.forEach((sc,mi)=>{if(br.rounds[ri][mi]){br.rounds[ri][mi].sa=sc[0]<0?"":sc[0];br.rounds[ri][mi].sb=sc[1]<0?"":sc[1];}});advance(br);});
@@ -1529,7 +1905,6 @@ function decodeSnapshot(str){
   S=prevS;
   return {id:"snap",name:o.n,date:o.d,location:o.l,state};
 }
-function liveLink(id){return liveBase()+"#/live/"+encodeURIComponent(id);}
 function snapLink(t){return liveBase()+"#/v/"+encodeSnapshot(t);}
 function liveLink(t){return liveBase()+"#/live/"+encodeURIComponent(t.id);}
 function parseHash(){const h=location.hash||"";let m;
@@ -1619,6 +1994,51 @@ function superConsolanteBlock(){
     ${lists}</div>`;
 }
 
+function printExtra(key){
+  const d=S[key]; if(!d)return;
+  if(d.pools&&d.pools.length)printPools(d.pools.map((_,i)=>[key,i]),extraTitle(key));
+  else if(d.bracket)printDoc(bracketSheetHTML(key,extraTitle(key).toUpperCase()),extraTitle(key),true);
+}
+/* Section optionnelle de création/gestion d'une phase Super Consolante ou Challenge. */
+function extraPhaseSection(key){
+  const src=EXTRA_SRC[key];
+  const pools=src==="haute"?(S.haute&&S.haute.pools):(S.basse&&S.basse.pools);
+  const bracket=src==="haute"?(S.finals&&S.finals.haute):(S.finals&&S.finals.basse);
+  if(!pools||!bracket)return ""; // pas encore pertinent (tableau source non généré)
+  const title=extraTitle(key), color=key==="superconso"?"#7C3AED":"#F59E0B", emoji=key==="superconso"?"🟪":"🟨";
+  const d=S[key], recs=extraTeamRecs(key);
+  let inner;
+  if(d){
+    let content="";
+    if(d.pools&&d.pools.length){
+      content+=`<div class="pool-grid">${d.pools.map((p,i)=>poolCard(key,i,poolLabelFor(key,i),key==="challenge")).join("")}</div>`;
+      const done=d.pools.every(p=>poolStandings(p).complete);
+      content+=`<div class="row" style="margin-top:12px"><button class="btn sm" onclick="printExtra('${key}')">🖨️ Imprimer</button>`;
+      if(!d.bracket&&done)content+=`<button class="btn sm" onclick="buildExtraFinals('${key}')">Générer le tableau final →</button>`;
+      content+=`<button class="btn sm danger" onclick="deleteExtra('${key}')">Supprimer</button></div>`;
+    }
+    if(d.bracket){
+      content+=`<div style="margin-top:12px">${renderBracket(key)}</div><div class="row" style="margin-top:12px"><button class="btn sm" onclick="printExtra('${key}')">🖨️ Imprimer le tableau</button>${d.pools?'':`<button class="btn sm danger" onclick="deleteExtra('${key}')">Supprimer</button>`}</div>`;
+    }
+    inner=content;
+  } else if(extraAssist===key){
+    if(recs.length<2)inner=`<p class="muted">Aucune équipe disponible.</p><button class="btn sm" onclick="extraAssist=null;render()">Fermer</button>`;
+    else{
+      const opts=extraPoolOptions(recs.length), pw=Math.pow(2,Math.floor(Math.log2(recs.length)));
+      inner=`<p class="muted tiny" style="margin-top:-4px"><b>${recs.length} équipes</b> : ${recs.map(r=>esc(teamName(r.id))).join(", ")}</p>
+      <div class="assist-grid">
+        <div class="assist-card"><h5>Poules (auto)</h5><p class="muted tiny">Répartition optimisée, évite les revanches.</p><button class="btn primary sm" onclick="createExtraPools('${key}',null)">Créer</button></div>
+        <div class="assist-card"><h5>Poules (manuel)</h5><p class="muted tiny">Nombre de poules :</p><div class="row" style="flex-wrap:wrap">${opts.map(o=>`<button class="btn sm" onclick="createExtraPools('${key}',${o.k})">${o.k} (${o.sizes.join('/')})</button>`).join("")}</div></div>
+        <div class="assist-card"><h5>Tableau direct</h5><p class="muted tiny">Élimination · ${pw} équipes.</p><button class="btn sm" onclick="createExtraBracket('${key}')">Créer</button></div>
+      </div>
+      <button class="btn sm" style="margin-top:10px" onclick="extraAssist=null;render()">Annuler</button>`;
+    }
+  } else {
+    inner=`<p class="muted tiny" style="margin-top:-4px">${recs.length} équipe(s) non qualifiée(s) peuvent jouer une ${title} (optionnel).</p><button class="btn primary sm" onclick="extraAssist='${key}';render()">➕ Créer la ${title}</button>`;
+  }
+  return `<div class="card extra-card" style="border-left:4px solid ${color}"><h3 class="sec" style="color:${color}">${emoji} ${title}</h3>${inner}</div>`;
+}
+
 function pageShare(){
   const t=cur();if(!t)return head("Live","Partage","");
   const live=liveLink(t);
@@ -1686,7 +2106,7 @@ function genSnap(){
 function copySnap(){const el=document.getElementById("snapUrl");if(!el)return;if(!el.value)genSnap();el.select();try{navigator.clipboard.writeText(el.value);}catch(e){try{document.execCommand("copy");}catch(_){}}toast("Lien instantané copié");}
 function openSpectator(){const t=cur();if(!t)return;location.hash="#/live/"+encodeURIComponent(t.id);}
 
-let specTab="classements", specQuery="";
+let specTab="matin", specQuery="";
 let _specTimer=null, _specSig=null, _specId=null;
 
 /* ===================== SAISIE DES SCORES PAR LES JOUEURS (optionnel) =====================
@@ -1703,14 +2123,14 @@ function playerEntryOn(state){return !!(state&&state.config&&state.config.player
 function applyScoreSlot(state,slot,a,b){
   if(!state)return false;
   const p=String(slot).split("|");
-  if(p[0]==="qualif"||p[0]==="haute"||p[0]==="basse"){
-    const store=p[0]==="qualif"?state.qualif:p[0]==="haute"?state.haute:state.basse;
+  if(p[0]==="qualif"||p[0]==="haute"||p[0]==="basse"||p[0]==="superconso"||p[0]==="challenge"){
+    const store=p[0]==="qualif"?state.qualif:p[0]==="haute"?state.haute:p[0]==="basse"?state.basse:state[p[0]];
     if(!store||!store.pools)return false;
     const pool=store.pools[+p[1]]; if(!pool||!pool.scores||!pool.scores[+p[2]])return false;
     pool.scores[+p[2]]=[a,b]; return true;
   }
-  if(p[0]==="fh"||p[0]==="fb"){
-    const br=p[0]==="fh"?(state.finals&&state.finals.haute):(state.finals&&state.finals.basse);
+  if(p[0]==="fh"||p[0]==="fb"||p[0]==="fsc"||p[0]==="fch"){
+    const br=p[0]==="fh"?(state.finals&&state.finals.haute):p[0]==="fb"?(state.finals&&state.finals.basse):p[0]==="fsc"?(state.superconso&&state.superconso.bracket):(state.challenge&&state.challenge.bracket);
     if(!br)return false;
     if(p[1]==="p"){ if(br.extra&&br.extra.petite&&br.extra.petite.a&&br.extra.petite.b){br.extra.petite.sa=a;br.extra.petite.sb=b;return true;} return false; }
     const round=br.rounds&&br.rounds[+p[1]]; if(!round||!round[+p[2]])return false;
@@ -1739,6 +2159,8 @@ function playerMatches(state,teamId){
   addPool("qualif","Poule de qualification",state.qualif);
   addPool("haute","Poule — Tableau Haut",state.haute);
   addPool("basse","Poule — Consolante",state.basse);
+  addPool("superconso","Super Consolante",state.superconso);
+  addPool("challenge","Challenge",state.challenge);
   const addBr=(key,label,br)=>{
     if(!br||!br.rounds)return;
     try{advance(br);}catch(e){}
@@ -1755,6 +2177,8 @@ function playerMatches(state,teamId){
   };
   addBr("fh","Tableau principal",state.finals&&state.finals.haute);
   addBr("fb","Consolante",state.finals&&state.finals.basse);
+  addBr("fsc","Super Consolante",state.superconso&&state.superconso.bracket);
+  addBr("fch","Challenge",state.challenge&&state.challenge.bracket);
   return out;
 }
 
@@ -1889,18 +2313,129 @@ async function refreshLive(id,firstLoad){
   S=t.state;ensureCourts();window._specT=t;
   root.innerHTML=spectatorView(t);
 }
-function specGo(tab){specTab=tab;document.getElementById("root").innerHTML=spectatorView(window._specT||{name:"",state:S});}
+function specGo(tab){specTab=tab;document.getElementById("root").innerHTML=spectatorView(window._specT||{name:"",state:S});window.scrollTo(0,0);}
+const SPEC_COL={matin:"#1E40AF",hautes:"#16A34A",conso:"#EA7317",superconso:"#7C3AED",challenge:"#F59E0B",principal:"#DC2626",consolante:"#92400E",equipe:"#334155"};
+const SPEC_LAB={matin:["🟦","Poules matin"],hautes:["🟩","Hautes"],conso:["🟧","Consolantes"],superconso:["🟪","Super Conso."],challenge:["🟨","Challenge"],principal:["🟥","Tableau principal"],consolante:["🟫","Tableau conso."],equipe:["👤","Mon équipe"]};
+function specHasExtra(key){const d=S[key];return !!(d&&(d.pools&&d.pools.length||d.bracket));}
+function specAvailableTabs(){
+  const T=[];
+  if(S.qualif&&S.qualif.pools)T.push("matin");
+  if(S.haute&&S.haute.pools)T.push("hautes");
+  if(S.basse&&S.basse.pools)T.push("conso");
+  if(specHasExtra("superconso"))T.push("superconso");
+  if(specHasExtra("challenge"))T.push("challenge");
+  if(S.finals&&S.finals.haute)T.push("principal");
+  if(S.finals&&S.finals.basse)T.push("consolante");
+  T.push("equipe");
+  return T;
+}
+function specDefaultTab(){
+  const a=specAvailableTabs();
+  for(const k of ["principal","consolante","challenge","superconso","hautes","conso","matin"])if(a.includes(k))return k;
+  return "equipe";
+}
+function specChampion(br){if(!br||!br.rounds||!br.rounds.length)return null;try{advance(br);}catch(e){}const last=br.rounds[br.rounds.length-1];return last&&last[0]?bWin(last[0]):null;}
+function specStage(){
+  if(S.finals&&S.finals.haute&&specChampion(S.finals.haute))return 4;
+  if(S.finals&&(S.finals.haute||S.finals.basse))return 3;
+  if(specHasExtra("superconso")||specHasExtra("challenge"))return 2;
+  if(S.haute&&S.haute.pools)return 1;
+  return 0;
+}
+function specProgress(){
+  const stage=specStage(), hasSC=specHasExtra("superconso")||specHasExtra("challenge");
+  const steps=[{lab:"Poules du matin",st:0},{lab:"Hautes / Consolantes",st:1}];
+  if(hasSC)steps.push({lab:"Super C. / Challenge",st:2});
+  steps.push({lab:"Phases finales",st:3},{lab:"🏆 Finale",st:4});
+  return `<div class="spec-progress">`+steps.map((s,i)=>{
+    const cls=stage>s.st?"done":stage===s.st?"active":"todo";
+    return `${i>0?'<span class="sp-arrow">›</span>':''}<span class="sp-step ${cls}">${s.lab}</span>`;
+  }).join("")+`</div>`;
+}
 function spectatorView(t){
-  const phase=!S.qualif||!S.qualif.pools?"Inscriptions":(S.finals&&(S.finals.haute||S.finals.basse))?"Phases finales":(S.haute&&S.haute.pools)?"Après-midi":"Poules de qualif.";
-  const tabs=[["classements","Classements"],["matchs","Matchs"],["finales","Finales"],["equipe","Mon équipe"]];
+  const avail=specAvailableTabs();
+  if(!avail.includes(specTab))specTab=specDefaultTab();
+  const phaseLabel={matin:"Poules du matin",hautes:"Poules Hautes",conso:"Poules Consolantes",superconso:"Super Consolante",challenge:"Challenge",principal:"Tableau Principal",consolante:"Tableau Consolante",equipe:"En direct"}[specTab]||"En direct";
+  const tabsHtml=avail.map(k=>{const[em,lb]=SPEC_LAB[k];const col=SPEC_COL[k]||"#334155";const on=specTab===k;
+    return `<button class="${on?'on':''}" style="${on?`background:${col};border-color:${col};color:#fff`:''}" onclick="specGo('${k}')">${em} ${lb}</button>`;}).join("");
   return `<div class="spec">
     <div class="spec-head"><div class="brand"><div class="ball"></div><div><h1>${esc(t.name||"Tournoi")}</h1><small>${[t.date,t.location].filter(Boolean).map(esc).join(" · ")||"Beach Volley"}</small></div></div>
-      <span class="live-badge"><span class="dot"></span>LIVE · ${esc(phase)}</span></div>
-    <div class="spec-tabs">${tabs.map(([k,l])=>`<button class="${specTab===k?'on':''}" onclick="specGo('${k}')">${l}</button>`).join("")}</div>
+      <span class="live-badge"><span class="dot"></span>LIVE · ${esc(phaseLabel)}</span></div>
+    ${specProgress()}
+    <div class="spec-tabs scrollx">${tabsHtml}</div>
     <div class="spec-body">${specBody()}</div>
     <div class="spec-foot"><a href="${liveBase()}">Cap Homard · Gestion de tournoi</a></div></div>`;
 }
-function specBody(){if(specTab==="equipe")return specSearch();if(specTab==="matchs")return specMatches();if(specTab==="finales")return specFinals();return specStandings();}
+function specPhaseHead(emoji,title,sub,color){return `<div class="spec-phase-head" style="border-color:${color}"><span class="spe" style="background:${color}">${emoji}</span><div><h3 style="color:${color}">${title}</h3>${sub?`<p>${sub}</p>`:''}</div></div>`;}
+function specPoolCombined(pool,phase,idx,label,color){
+  const st=poolStandings(pool),qpp=S.config.qualifPerPool;
+  let court="";
+  if(phase==="qualif"){const ci=poolCourt(idx);court=courtName(ci.court-1)+(ci.rotation>1?' · rot.'+ci.rotation:'');}
+  else if(phase==="haute"||phase==="basse"){const ci=afternoonCourt(phase,idx);court=courtName(ci.court-1)+(ci.rotation>1?' · rot.'+ci.rotation:'');}
+  else if(pool.courtName)court=pool.courtName;
+  const matchs=pool.matches.map((m,mi)=>{const s=pool.scores[mi]||["",""];const played=s[0]!==""&&s[1]!=="";const w1=played&&+s[0]>+s[1],w2=played&&+s[1]>+s[0];
+    return `<div class="spec-match ${played?'done':'todo'}"><span class="t1 ${w1?'w':''}">${esc(teamName(pool.teams[m.i]))}</span><span class="sc">${played?`${s[0]} - ${s[1]}`:'vs'}</span><span class="t2 ${w2?'w':''}">${esc(teamName(pool.teams[m.j]))}</span></div>`;}).join("");
+  const rows=st.ordered.map(x=>{const up=phase==="qualif"&&x.rank>0&&x.rank<=qpp;
+    return `<tr class="${x.rank===1?'r1':''} ${up?'qd':''}"><td><span class="rk">${x.rank||'-'}</span></td><td class="nm">${esc(teamName(x.id))}</td><td>${x.w}</td><td>${x.l}</td><td>${x.diff>=0?'+':''}${x.diff}</td><td class="cf">${fmtCoeff(x.coeff)}</td></tr>`;}).join("");
+  return `<div class="card spec-pool"><div class="spec-pool-h" style="border-left:4px solid ${color}"><b>${esc(label)}</b>${court?`<span class="court">${esc(court)}</span>`:''}</div>
+    <div class="spec-matches-wrap">${matchs}</div>
+    <table class="standtbl spec-tbl mini"><thead><tr><th></th><th style="text-align:left">Équipe</th><th>V</th><th>D</th><th>Diff</th><th>Coeff</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function specBody(){
+  switch(specTab){
+    case "matin": return specMorningTab();
+    case "hautes": return specAfternoonTab("haute");
+    case "conso": return specAfternoonTab("basse");
+    case "superconso": return specExtraTab("superconso");
+    case "challenge": return specExtraTab("challenge");
+    case "principal": return specBracketTab("haute");
+    case "consolante": return specBracketTab("basse");
+    case "equipe": return specSearch();
+    default: return specMorningTab();
+  }
+}
+function specMorningTab(){
+  const c=SPEC_COL.matin;
+  if(!S.qualif||!S.qualif.pools)return specPhaseHead("🟦","Poules du matin","",c)+`<div class="card"><p class="muted">Le tournoi n'a pas encore commencé.</p></div>`;
+  let html=specPhaseHead("🟦","Poules du matin",`Round-robin · ${formatLabel()} · ${S.config.qualifPerPool} qualifié(s) par poule vers le Tableau Haut`,c);
+  html+=S.qualif.pools.map((p,i)=>specPoolCombined(p,"qualif",i,"Poule "+plabel(i),c)).join("");
+  if(S.haute&&S.haute.pools){
+    const hIds=[],bIds=[];
+    S.haute.pools.forEach(p=>p.teams.forEach(id=>hIds.push(id)));
+    (S.basse.pools||[]).forEach(p=>p.teams.forEach(id=>bIds.push(id)));
+    html+=`<div class="card spec-qual"><h4 style="color:${SPEC_COL.hautes}">▲ Qualifiées en Poules Hautes (${hIds.length})</h4><div class="chips">${hIds.map(id=>`<span class="chip">${esc(teamName(id))}</span>`).join("")}</div>
+      <h4 style="color:${SPEC_COL.conso};margin-top:14px">▼ En Poules Consolantes (${bIds.length})</h4><div class="chips">${bIds.map(id=>`<span class="chip">${esc(teamName(id))}</span>`).join("")}</div></div>`;
+  } else html+=`<div class="note">Poules du matin en cours. La liste des qualifiées s'affichera une fois les scores saisis et la répartition générée.</div>`;
+  return html;
+}
+function specAfternoonTab(side){
+  const isH=side==="haute", c=isH?SPEC_COL.hautes:SPEC_COL.conso;
+  const pools=isH?(S.haute&&S.haute.pools):(S.basse&&S.basse.pools);
+  const emoji=isH?"🟩":"🟧", title=isH?"Poules Hautes":"Poules Consolantes";
+  if(!pools)return specPhaseHead(emoji,title,"",c)+`<div class="card"><p class="muted">Poules pas encore générées.</p></div>`;
+  let html=specPhaseHead(emoji,title,formatLabel(),c);
+  html+=pools.map((p,i)=>specPoolCombined(p,side,i,(isH?"Poule H":"Poule C")+(i+1),c)).join("");
+  const br=S.finals&&S.finals[side];
+  if(br)html+=explainBlock(pools,br,isH?"H":"C",title,c);
+  return html;
+}
+function specBracketTab(side){
+  const isH=side==="haute", c=isH?SPEC_COL.principal:SPEC_COL.consolante;
+  const emoji=isH?"🟥":"🟫", title=isH?"Tableau Principal":"Tableau Consolante";
+  const br=S.finals&&S.finals[side];
+  if(!br||br.size<2)return specPhaseHead(emoji,title,"",c)+`<div class="card"><p class="muted">Tableau non généré.</p></div>`;
+  const champ=specChampion(br);
+  return specPhaseHead(emoji,title,champ?`🏆 Vainqueur : ${esc(teamName(champ.id))}`:"Élimination directe",c)+specBracket(br);
+}
+function specExtraTab(key){
+  const isSC=key==="superconso", c=isSC?SPEC_COL.superconso:SPEC_COL.challenge;
+  const emoji=isSC?"🟪":"🟨", title=isSC?"Super Consolante":"Challenge", data=S[key];
+  if(!data)return specPhaseHead(emoji,title,"",c)+`<div class="card"><p class="muted">Non créé.</p></div>`;
+  let html=specPhaseHead(emoji,title,formatLabel(),c);
+  if(data.pools&&data.pools.length)html+=data.pools.map((p,i)=>specPoolCombined(p,key,i,title+" "+(i+1),c)).join("");
+  if(data.bracket){const champ=specChampion(data.bracket);if(champ)html+=`<div class="note" style="border-color:${c}">🏆 Vainqueur : <b>${esc(teamName(champ.id))}</b></div>`;html+=specBracket(data.bracket);}
+  return html;
+}
 function statusBadge(st){return `<span class="st-badge ${st.cls}">${st.label}</span>`;}
 function specStandtable(pool,phase,idx){
   const st=poolStandings(pool),qpp=S.config.qualifPerPool;
